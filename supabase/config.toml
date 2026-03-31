@@ -1,0 +1,31 @@
+{
+  "project_id": "your-project-id",
+  "api": {
+    "port": 54321,
+    "schemas": ["public", "graphql_public"],
+    "extra_search_path": ["public"],
+    "max_rows": 1000
+  },
+  "db": {
+    "port": 54322,
+    "shadow_port": 54320
+  },
+  "functions": {
+    "verify_jwt": false,
+    "external_url": "",
+    "s3_bucket": ""
+  },
+  "storage": {
+    "file_size_limit": "5242880",
+    "image_transformation_enabled": true,
+    "image_transformation_format": ["avif", "webp"]
+  },
+  "auth": {
+    "site_url": "http://localhost:3000",
+    "additional_redirect_urls": ["https://vercel.app", "https://netlify.app"],
+    "jwt_expiry": 3600
+  },
+  "realtime": {
+    "enabled": true
+  }
+}

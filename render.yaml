@@ -1,0 +1,25 @@
+services:
+  # SITA Frontend on Render
+  - type: web
+    name: sita-frontend
+    env: static
+    buildCommand: "npm install && npm run build"
+    staticPublishPath: ./dist
+    domains:
+      - sita.onrender.com
+    routes:
+      # API routes to Supabase Edge Functions
+      - type: rewrite
+        source: /api/*
+        destination: https://your-project-ref.supabase.co/functions/v1/sita-api
+      # All other routes to index.html (SPA)
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
+      - key: NODE_ENV
+        value: production
