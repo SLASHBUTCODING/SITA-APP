@@ -183,7 +183,7 @@ export const authApi = {
 
       if (authError) throw authError;
 
-      // Create driver profile
+      // Create driver profile with pending verification - must be approved by Admin
       const { data: profileData, error: profileError } = await supabase
         .from('drivers')
         .insert([{
@@ -196,7 +196,8 @@ export const authApi = {
           vehicle_model: body.vehicleModel,
           vehicle_color: body.vehicleColor,
           license_url: body.licenseUrl || null,
-          password_hash: 'handled_by_supabase_auth'
+          password_hash: 'handled_by_supabase_auth',
+          verification_status: 'pending'
         }])
         .select()
         .single();
@@ -265,6 +266,16 @@ export const authApi = {
         .single();
 
       const driver = profile || authData.user;
+
+      // Block login if not yet verified by Admin
+      if (profile && profile.verification_status !== 'verified') {
+        await supabase.auth.signOut();
+        if (profile.verification_status === 'rejected') {
+          throw new Error('Your application was rejected. Please contact support.');
+        }
+        throw new Error('Your account is pending admin verification. Please wait for approval.');
+      }
+
       localStorage.setItem('sita_user', JSON.stringify(driver));
       localStorage.setItem('sita_role', 'driver');
       return { success: true, token: authData.session?.access_token || '', driver };

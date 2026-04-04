@@ -1,0 +1,284 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
+import { motion } from "motion/react";
+import { supabase } from "../../../lib/supabase";
+import {
+  CheckCircle, XCircle, Clock, LogOut, Eye, EyeOff,
+  Shield, Users, Car, RefreshCw
+} from "lucide-react";
+
+const ADMIN_PASSWORD = "sita-admin-2024";
+
+interface Driver {
+  id: string;
+  first_name: string;
+  last_name: string;
+  phone: string;
+  email?: string;
+  plate_number: string;
+  vehicle_model: string;
+  vehicle_color: string;
+  license_url?: string;
+  verification_status: "pending" | "verified" | "rejected";
+  created_at: string;
+}
+
+export function AdminPortal() {
+  const navigate = useNavigate();
+  const [authed, setAuthed] = useState(false);
+  const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [pwError, setPwError] = useState("");
+
+  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [filter, setFilter] = useState<"all" | "pending" | "verified" | "rejected">("pending");
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Driver | null>(null);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password === ADMIN_PASSWORD) {
+      setAuthed(true);
+      setPwError("");
+    } else {
+      setPwError("Invalid admin password.");
+    }
+  };
+
+  const fetchDrivers = async () => {
+    setLoading(true);
+    const query = supabase
+      .from("drivers")
+      .select("id, first_name, last_name, phone, email, plate_number, vehicle_model, vehicle_color, license_url, verification_status, created_at")
+      .order("created_at", { ascending: false });
+
+    if (filter !== "all") query.eq("verification_status", filter);
+
+    const { data, error } = await query;
+    if (!error && data) setDrivers(data as Driver[]);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    if (authed) fetchDrivers();
+  }, [authed, filter]);
+
+  const updateStatus = async (driverId: string, status: "verified" | "rejected") => {
+    setActionLoading(driverId);
+    const { error } = await supabase
+      .from("drivers")
+      .update({ verification_status: status })
+      .eq("id", driverId);
+
+    if (!error) {
+      setDrivers((prev) =>
+        prev.map((d) => (d.id === driverId ? { ...d, verification_status: status } : d))
+      );
+      if (selected?.id === driverId) setSelected({ ...selected, verification_status: status });
+    }
+    setActionLoading(null);
+  };
+
+  const counts = {
+    pending: drivers.filter((d) => d.verification_status === "pending").length,
+    verified: drivers.filter((d) => d.verification_status === "verified").length,
+    rejected: drivers.filter((d) => d.verification_status === "rejected").length,
+  };
+
+  if (!authed) {
+    return (
+      <div className="min-h-screen bg-[#0f0f1a] flex items-center justify-center px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-sm bg-[#1a1a2e] rounded-2xl p-8 border border-white/10 shadow-2xl"
+        >
+          <div className="flex flex-col items-center mb-8">
+            <div className="w-16 h-16 bg-[#F47920]/20 rounded-2xl flex items-center justify-center mb-4 border border-[#F47920]/30">
+              <Shield className="w-8 h-8 text-[#F47920]" />
+            </div>
+            <h1 className="text-white text-2xl font-bold">SITA Admin</h1>
+            <p className="text-gray-400 text-sm mt-1">Driver Verification Portal</p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="text-white/80 text-sm font-semibold mb-2 block">Admin Password</label>
+              <div className="relative">
+                <input
+                  type={showPw ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••••••"
+                  className="w-full pr-11 pl-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-[#F47920]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPw(!showPw)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40"
+                >
+                  {showPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              {pwError && <p className="text-red-400 text-xs mt-1">{pwError}</p>}
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-[#F47920] text-white font-bold py-3 rounded-xl shadow-lg"
+            >
+              Enter Admin Portal
+            </button>
+          </form>
+        </motion.div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#0f0f1a] text-white">
+      {/* Header */}
+      <div className="bg-[#1a1a2e] border-b border-white/10 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 bg-[#F47920]/20 rounded-xl flex items-center justify-center">
+            <Shield className="w-5 h-5 text-[#F47920]" />
+          </div>
+          <div>
+            <h1 className="text-white font-bold text-lg leading-none">SITA Admin</h1>
+            <p className="text-gray-500 text-xs">Driver Verification</p>
+          </div>
+        </div>
+        <button
+          onClick={() => setAuthed(false)}
+          className="flex items-center gap-1.5 text-gray-400 hover:text-white text-sm"
+        >
+          <LogOut className="w-4 h-4" />
+          Logout
+        </button>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          {[
+            { label: "Pending", count: counts.pending, color: "text-yellow-400", bg: "bg-yellow-400/10", icon: Clock },
+            { label: "Verified", count: counts.verified, color: "text-green-400", bg: "bg-green-400/10", icon: CheckCircle },
+            { label: "Rejected", count: counts.rejected, color: "text-red-400", bg: "bg-red-400/10", icon: XCircle },
+          ].map(({ label, count, color, bg, icon: Icon }) => (
+            <div key={label} className={`${bg} border border-white/10 rounded-xl p-4 text-center`}>
+              <Icon className={`w-5 h-5 ${color} mx-auto mb-1`} />
+              <p className={`text-xl font-bold ${color}`}>{count}</p>
+              <p className="text-gray-400 text-xs">{label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Filter tabs */}
+        <div className="flex gap-2 mb-4 flex-wrap">
+          {(["pending", "verified", "rejected", "all"] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-4 py-1.5 rounded-full text-sm font-semibold capitalize transition-colors ${
+                filter === f
+                  ? "bg-[#F47920] text-white"
+                  : "bg-white/10 text-gray-300 hover:bg-white/20"
+              }`}
+            >
+              {f}
+            </button>
+          ))}
+          <button
+            onClick={fetchDrivers}
+            className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm bg-white/10 text-gray-300 hover:bg-white/20"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Refresh
+          </button>
+        </div>
+
+        {/* Driver list */}
+        {loading ? (
+          <div className="text-center py-16 text-gray-500">Loading drivers...</div>
+        ) : drivers.length === 0 ? (
+          <div className="text-center py-16 text-gray-500">
+            <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
+            <p>No {filter === "all" ? "" : filter} drivers found.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {drivers.map((driver) => (
+              <motion.div
+                key={driver.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-[#1a1a2e] border border-white/10 rounded-2xl p-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="text-white font-bold truncate">
+                        {driver.first_name} {driver.last_name}
+                      </h3>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-semibold flex-shrink-0 ${
+                        driver.verification_status === "verified"
+                          ? "bg-green-400/20 text-green-400"
+                          : driver.verification_status === "rejected"
+                          ? "bg-red-400/20 text-red-400"
+                          : "bg-yellow-400/20 text-yellow-400"
+                      }`}>
+                        {driver.verification_status}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
+                      <Car className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span className="truncate">{driver.plate_number} · {driver.vehicle_model} · {driver.vehicle_color}</span>
+                    </div>
+                    <p className="text-gray-500 text-xs">{driver.phone}</p>
+                    <p className="text-gray-600 text-xs mt-0.5">
+                      Applied: {new Date(driver.created_at).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })}
+                    </p>
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="flex flex-col gap-2 flex-shrink-0">
+                    {driver.verification_status !== "verified" && (
+                      <button
+                        onClick={() => updateStatus(driver.id, "verified")}
+                        disabled={actionLoading === driver.id}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/20 text-green-400 border border-green-500/30 rounded-lg text-xs font-semibold hover:bg-green-500/30 disabled:opacity-50 transition-colors"
+                      >
+                        <CheckCircle className="w-3.5 h-3.5" />
+                        {actionLoading === driver.id ? "..." : "Approve"}
+                      </button>
+                    )}
+                    {driver.verification_status !== "rejected" && (
+                      <button
+                        onClick={() => updateStatus(driver.id, "rejected")}
+                        disabled={actionLoading === driver.id}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-xs font-semibold hover:bg-red-500/30 disabled:opacity-50 transition-colors"
+                      >
+                        <XCircle className="w-3.5 h-3.5" />
+                        {actionLoading === driver.id ? "..." : "Reject"}
+                      </button>
+                    )}
+                    {driver.verification_status !== "pending" && (
+                      <button
+                        onClick={() => updateStatus(driver.id, "verified")}
+                        disabled={driver.verification_status === "verified" || actionLoading === driver.id}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 rounded-lg text-xs font-semibold hover:bg-yellow-500/30 disabled:opacity-50 transition-colors"
+                      >
+                        <Clock className="w-3.5 h-3.5" />
+                        Reset
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

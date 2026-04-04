@@ -1,5 +1,6 @@
 import { createBrowserRouter } from "react-router";
 import { Root } from "./Root";
+import { AdminPortal } from "./pages/admin/AdminPortal";
 import { Welcome } from "./pages/Welcome";
 import { CustomerHome } from "./pages/customer/Home";
 import { CustomerFinding } from "./pages/customer/FindingDriver";
@@ -24,6 +25,10 @@ import { DriverLogin } from "./pages/driver/Login";
 import { DriverOTPVerification } from "./pages/driver/OTPVerification";
 
 export const router = createBrowserRouter([
+  {
+    path: "/admin",
+    Component: AdminPortal,
+  },
   {
     path: "/",
     Component: Root,

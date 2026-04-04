@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { motion } from "motion/react";
-import { ArrowLeft, User, Phone, Mail, Lock, Eye, EyeOff, Upload, FileText, CheckCircle } from "lucide-react";
+import { ArrowLeft, User, Phone, Mail, Lock, Eye, EyeOff, Upload, FileText, CheckCircle, Clock, Shield } from "lucide-react";
 import { authApi, saveAuth } from "../../services/api";
 
 export function DriverSignup() {
@@ -28,17 +28,17 @@ export function DriverSignup() {
     }
   };
 
+  const [registered, setRegistered] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
-      // For now, skip file upload until we set up Supabase Storage
-      // TODO: Implement Supabase Storage for file uploads
       const licenseUrl = "placeholder_license_url";
       const res = await authApi.driverRegister({ ...formData, licenseUrl });
       saveAuth(res.token, res.driver, "driver");
-      navigate("/driver/home");
+      setRegistered(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
     } finally {
@@ -46,11 +46,47 @@ export function DriverSignup() {
     }
   };
 
+  if (registered) {
+    return (
+      <div className="h-full w-full flex flex-col items-center justify-center bg-[#1a1a2e] px-6">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col items-center text-center"
+        >
+          <div className="w-24 h-24 bg-[#F47920]/20 rounded-full flex items-center justify-center mb-6 border-2 border-[#F47920]/40">
+            <Clock className="w-12 h-12 text-[#F47920]" />
+          </div>
+          <h1 className="text-white text-2xl font-bold mb-3">Application Submitted!</h1>
+          <p className="text-gray-400 text-sm leading-relaxed mb-2">
+            Ang iyong application bilang driver ay natanggap na.
+          </p>
+          <p className="text-gray-400 text-sm leading-relaxed mb-8">
+            Ikaw ay <span className="text-[#F47920] font-semibold">ireview ng Admin</span> bago makapag-login. Maaaring tumagal ng 1–2 araw.
+          </p>
+          <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 mb-8 text-left space-y-2">
+            <div className="flex items-center gap-2">
+              <Shield className="w-4 h-4 text-[#F47920]" />
+              <span className="text-white text-sm font-semibold">What happens next?</span>
+            </div>
+            <p className="text-gray-400 text-xs pl-6">1. Admin reviews your details and license</p>
+            <p className="text-gray-400 text-xs pl-6">2. You will be notified once approved</p>
+            <p className="text-gray-400 text-xs pl-6">3. Log in and start accepting rides!</p>
+          </div>
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => navigate("/driver/login")}
+            className="w-full bg-[#F47920] text-white font-bold py-4 rounded-xl shadow-lg shadow-orange-900/20"
+          >
+            Go to Login
+          </motion.button>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full w-full flex flex-col bg-gray-50 overflow-hidden">
-      {/* reCAPTCHA container for Firebase */}
-      <div id="sign-in-button" style={{ display: 'none' }}></div>
-      
       {/* Header */}
       <div className="bg-gradient-to-b from-[#1a1a2e] to-[#2d2d4e] pt-12 pb-8 px-5 relative">
         <button
