@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { ArrowLeft, User, Phone, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { authApi, saveAuth } from "../../services/api";
-import { sendOTP } from "../../../services/smsOTP";
+import { sendOTP } from "../../../services/firebaseSMS";
 
 export function CustomerSignup() {
   const navigate = useNavigate();
@@ -39,6 +39,9 @@ export function CustomerSignup() {
 
   return (
     <div className="h-full w-full flex flex-col bg-white overflow-hidden">
+      {/* reCAPTCHA container for Firebase */}
+      <div id="sign-in-button" style={{ display: 'none' }}></div>
+      
       {/* Header */}
       <div className="bg-gradient-to-b from-[#F47920] to-[#F47920]/90 pt-12 pb-8 px-5 relative">
         <button

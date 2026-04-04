@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { ArrowLeft, Mail, Check } from "lucide-react";
 import { getStoredUser } from "../../services/api";
-import { verifyOTP, resendOTP, getCurrentOTP } from "../../../services/smsOTP";
+import { verifyOTP, resendOTP, getCurrentOTP } from "../../../services/firebaseSMS";
 
 export function CustomerOTPVerification() {
   const navigate = useNavigate();
