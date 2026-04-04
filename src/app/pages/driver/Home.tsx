@@ -26,12 +26,19 @@ export function DriverHome() {
   const [isOnline, setIsOnline] = useState(false);
   const [tipIndex] = useState(0);
   const [incomingRide, setIncomingRide] = useState<null | { pickupAddress: string; dropoffAddress: string }>(null);
+  const [currentCoords, setCurrentCoords] = useState<{lat: number, lng: number} | null>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
 
   const driver = getStoredUser<DriverData>();
   const displayName = driver ? `${driver.first_name} ${driver.last_name}` : "Driver";
   const driverId = driver?.id;
 
   useEffect(() => {
+    // Get driver's current location when online
+    if (isOnline && driverId) {
+      getCurrentLocation();
+    }
+    
     // TODO: Implement proper Supabase Realtime subscriptions
     // For now, just log that we're listening for ride requests
     console.log('Listening for ride requests...');
@@ -39,7 +46,7 @@ export function DriverHome() {
     return () => {
       // Cleanup when component unmounts
     };
-  }, []);
+  }, [isOnline, driverId]);
 
   const handleToggleOnline = async () => {
     if (!driverId) return;
@@ -47,13 +54,54 @@ export function DriverHome() {
     setIsOnline(next);
     try {
       if (next) {
-        await driverGoOnline(driverId, 14.5995, 120.9842);
+        // Get current location when going online
+        const coords = await getCurrentLocation();
+        if (coords) {
+          await driverGoOnline(driverId, coords.lat, coords.lng);
+        } else {
+          // Fallback to default location
+          await driverGoOnline(driverId, 14.5995, 120.9842);
+        }
       } else {
         await driverGoOffline(driverId);
       }
     } catch {
       setIsOnline(!next);
     }
+  };
+
+  const getCurrentLocation = () => {
+    return new Promise<{lat: number, lng: number} | null>((resolve) => {
+      if (!navigator.geolocation) {
+        console.warn("Geolocation not supported");
+        resolve(null);
+        return;
+      }
+
+      setLocationLoading(true);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const coords = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          setCurrentCoords(coords);
+          setLocationLoading(false);
+          console.log("📍 Driver location:", coords);
+          resolve(coords);
+        },
+        (error) => {
+          console.error("Error getting driver location:", error);
+          setLocationLoading(false);
+          resolve(null);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      );
+    });
   };
 
   return (
