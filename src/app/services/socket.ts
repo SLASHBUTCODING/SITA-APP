@@ -3,11 +3,11 @@ import { supabase } from '../../lib/supabase';
 let driverChannel: any = null;
 let customerChannel: any = null;
 
-// ─── Driver socket helpers (using Supabase Realtime) ──────────────────
+// ─── Driver socket helpers (using Supabase Database) ──────────────────
 
 export function driverGoOnline(driverId: string, latitude: number, longitude: number) {
   // Update driver status in database
-  supabase
+  return supabase
     .from('drivers')
     .update({ 
       is_online: true, 
@@ -16,32 +16,14 @@ export function driverGoOnline(driverId: string, latitude: number, longitude: nu
       location_updated_at: new Date().toISOString()
     })
     .eq('id', driverId);
-
-  // Broadcast to all customers
-  supabase
-    .channel('driver-updates')
-    .send({
-      type: 'broadcast',
-      event: 'driver-online',
-      payload: { driverId, latitude, longitude }
-    });
 }
 
 export function driverGoOffline(driverId: string) {
   // Update driver status in database
-  supabase
+  return supabase
     .from('drivers')
     .update({ is_online: false })
     .eq('id', driverId);
-
-  // Broadcast to all customers
-  supabase
-    .channel('driver-updates')
-    .send({
-      type: 'broadcast',
-      event: 'driver-offline',
-      payload: { driverId }
-    });
 }
 
 export function driverUpdateLocation(
@@ -52,7 +34,7 @@ export function driverUpdateLocation(
   heading?: number
 ) {
   // Update location in database
-  supabase
+  const locationUpdate = supabase
     .from('drivers')
     .update({ 
       current_latitude: latitude, 
@@ -72,19 +54,12 @@ export function driverUpdateLocation(
       heading: heading || null
     }]);
 
-  // Broadcast location update
-  supabase
-    .channel('driver-locations')
-    .send({
-      type: 'broadcast',
-      event: 'driver-location-update',
-      payload: { driverId, latitude, longitude, speed, heading }
-    });
+  return locationUpdate;
 }
 
 export function driverAcceptRide(driverId: string, rideId: string) {
   // Update ride status
-  supabase
+  return supabase
     .from('rides')
     .update({ 
       status: 'accepted',
@@ -92,58 +67,31 @@ export function driverAcceptRide(driverId: string, rideId: string) {
       accepted_at: new Date().toISOString()
     })
     .eq('id', rideId);
-
-  // Broadcast ride update
-  supabase
-    .channel('ride-updates')
-    .send({
-      type: 'broadcast',
-      event: 'ride-accepted',
-      payload: { driverId, rideId }
-    });
 }
 
 export function driverStartRide(driverId: string, rideId: string) {
   // Update ride status
-  supabase
+  return supabase
     .from('rides')
     .update({ 
       status: 'in_progress',
       started_at: new Date().toISOString()
     })
     .eq('id', rideId);
-
-  // Broadcast ride update
-  supabase
-    .channel('ride-updates')
-    .send({
-      type: 'broadcast',
-      event: 'ride-started',
-      payload: { driverId, rideId }
-    });
 }
 
 export function driverCompleteRide(driverId: string, rideId: string) {
   // Update ride status
-  supabase
+  return supabase
     .from('rides')
     .update({ 
       status: 'completed',
       completed_at: new Date().toISOString()
     })
     .eq('id', rideId);
-
-  // Broadcast ride update
-  supabase
-    .channel('ride-updates')
-    .send({
-      type: 'broadcast',
-      event: 'ride-completed',
-      payload: { driverId, rideId }
-    });
 }
 
-// ─── Customer socket helpers (using Supabase Realtime) ─────────────────
+// ─── Customer socket helpers (using Supabase Database) ─────────────────
 
 export function customerRequestRide(data: {
   customerId: string;
@@ -155,7 +103,7 @@ export function customerRequestRide(data: {
   dropoffAddress: string;
 }) {
   // Create ride request
-  supabase
+  return supabase
     .from('rides')
     .insert([{
       customer_id: data.customerId,
@@ -167,45 +115,18 @@ export function customerRequestRide(data: {
       dropoff_address: data.dropoffAddress,
       status: 'requested'
     }]);
-
-  // Broadcast ride request to drivers
-  supabase
-    .channel('ride-requests')
-    .send({
-      type: 'broadcast',
-      event: 'ride-requested',
-      payload: data
-    });
 }
 
 export function customerWatchDrivers() {
-  // Subscribe to driver updates
-  driverChannel = supabase
-    .channel('driver-updates')
-    .on('broadcast', { event: 'driver-online' }, (payload: any) => {
-      // Handle driver coming online
-      console.log('Driver online:', payload.payload);
-    })
-    .on('broadcast', { event: 'driver-offline' }, (payload: any) => {
-      // Handle driver going offline
-      console.log('Driver offline:', payload.payload);
-    })
-    .on('broadcast', { event: 'driver-location-update' }, (payload: any) => {
-      // Handle driver location updates
-      console.log('Driver location update:', payload.payload);
-    })
-    .subscribe();
+  // For now, just log that we're watching drivers
+  console.log('Watching for driver updates...');
+  // TODO: Implement Supabase Realtime subscriptions properly
 }
 
 export function customerWatchDriver(driverId: string) {
-  // Subscribe to specific driver updates
-  customerChannel = supabase
-    .channel(`driver-${driverId}`)
-    .on('broadcast', { event: 'driver-location-update' }, (payload: any) => {
-      // Handle specific driver location updates
-      console.log(`Driver ${driverId} location:`, payload.payload);
-    })
-    .subscribe();
+  // For now, just log that we're watching a specific driver
+  console.log(`Watching driver ${driverId}...`);
+  // TODO: Implement Supabase Realtime subscriptions properly
 }
 
 export function customerLeaveRide(rideId: string) {

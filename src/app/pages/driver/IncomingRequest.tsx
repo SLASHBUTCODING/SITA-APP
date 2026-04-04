@@ -28,16 +28,12 @@ export function DriverRequest() {
   const driverId = driver?.id;
 
   useEffect(() => {
-    // Subscribe to ride requests via Supabase
-    const subscription = supabase
-      .channel('ride-requests')
-      .on('broadcast', { event: 'ride-requested' }, (payload: any) => {
-        navigate("/driver/request", { state: { rideId: payload.payload.rideId, pickupAddress: payload.payload.pickupAddress, dropoffAddress: payload.payload.dropoffAddress } });
-      })
-      .subscribe();
-
+    // TODO: Implement proper Supabase Realtime subscriptions
+    // For now, just log that we're listening for ride requests
+    console.log('Listening for ride requests...');
+    
     return () => {
-      supabase.removeChannel(subscription);
+      // Cleanup when component unmounts
     };
   }, [navigate]);
 

@@ -43,24 +43,15 @@ export function CustomerHome() {
   const displayName = user ? `${user.first_name} ${user.last_name}` : "Pasahero";
 
   useEffect(() => {
-    // Use Supabase Realtime instead of Socket.IO
+    // Use Supabase to get nearby drivers count (simplified for now)
     customerWatchDrivers();
     
-    // Subscribe to driver updates via Supabase
-    const subscription = supabase
-      .channel('driver-updates')
-      .on('broadcast', { event: 'driver-online' }, (payload: any) => {
-        // Handle driver coming online
-        customerWatchDrivers(); // Refresh driver count
-      })
-      .on('broadcast', { event: 'driver-offline' }, (payload: any) => {
-        // Handle driver going offline
-        customerWatchDrivers(); // Refresh driver count
-      })
-      .subscribe();
-
+    // TODO: Implement proper Supabase Realtime subscriptions
+    // For now, just set a placeholder count
+    setNearbyCount(3);
+    
     return () => {
-      supabase.removeChannel(subscription);
+      // Cleanup when component unmounts
     };
   }, []);
 

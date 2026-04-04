@@ -36,21 +36,17 @@ export function CustomerFinding() {
   useEffect(() => {
     if (!rideId) return;
 
-    // Subscribe to ride updates via Supabase
-    const subscription = supabase
-      .channel(`ride-${rideId}`)
-      .on('broadcast', { event: 'ride-accepted' }, (payload: any) => {
-        if (payload.payload.rideId !== rideId) return;
-        customerWatchDriver(payload.payload.driverId);
-        ridesApi.get(rideId).then((res: any) => {
-          setRideData(res.data);
-          setPhase("found");
-        }).catch(() => setPhase("found"));
-      })
-      .subscribe();
+    // TODO: Implement proper Supabase Realtime subscriptions
+    // For now, simulate finding a driver after 3 seconds
+    const timer = setTimeout(() => {
+      ridesApi.get(rideId).then((res: any) => {
+        setRideData(res.data);
+        setPhase("found");
+      }).catch(() => setPhase("found"));
+    }, 3000);
 
     return () => {
-      supabase.removeChannel(subscription);
+      clearTimeout(timer);
     };
   }, [rideId]);
 

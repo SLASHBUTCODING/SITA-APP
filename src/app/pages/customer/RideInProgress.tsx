@@ -61,23 +61,14 @@ export function CustomerRide() {
   useEffect(() => {
     if (!rideId) return;
 
-    // Subscribe to ride updates via Supabase
-    const subscription = supabase
-      .channel(`ride-${rideId}`)
-      .on('broadcast', { event: 'ride-status-update' }, (payload: any) => {
-        const statusMap: Record<string, number> = {
-          accepted: 0, arrived: 1, in_progress: 2, completed: 3,
-        };
-        const newPhase = statusMap[payload.payload.status] ?? 0;
-        setStep(newPhase);
-      })
-      .on('broadcast', { event: 'driver-near-dropoff' }, () => {
-        setStep(3);
-      })
-      .subscribe();
+    // TODO: Implement proper Supabase Realtime subscriptions
+    // For now, just simulate ride progress
+    const timer = setTimeout(() => {
+      setStep(1); // Simulate driver arriving
+    }, 5000);
 
     return () => {
-      supabase.removeChannel(subscription);
+      clearTimeout(timer);
     };
   }, [rideId, navigate, rideData]);
 
