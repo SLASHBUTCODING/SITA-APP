@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { ArrowLeft, Mail, Check } from "lucide-react";
 import { getStoredUser } from "../../services/api";
+import { verifyOTP, resendOTP, getCurrentOTP } from "../../../services/smsOTP";
 
 export function CustomerOTPVerification() {
   const navigate = useNavigate();
@@ -44,37 +45,53 @@ export function CustomerOTPVerification() {
     }
   };
 
-  const user = getStoredUser<{ email?: string; first_name?: string }>();
+  const user = getStoredUser<{ phone?: string; first_name?: string }>();
 
   useEffect(() => {
-    // TODO: Implement proper OTP with Supabase
-    // For now, just simulate that OTP was sent
-    console.log('OTP would be sent to:', user?.email);
+    if (user?.phone) {
+      // Show current OTP in console for development
+      const currentOTP = getCurrentOTP(user.phone);
+      if (currentOTP) {
+        console.log(`📱 Current OTP for ${user.phone}: ${currentOTP}`);
+      }
+    }
   }, []);
 
   const handleResend = async () => {
     setTimer(60);
     setCanResend(false);
     setError("");
-    // TODO: Implement proper OTP resend with Supabase
-    console.log('OTP resent to:', user?.email);
+    if (user?.phone) {
+      try { 
+        await resendOTP(user.phone); 
+        const newOTP = getCurrentOTP(user.phone);
+        if (newOTP) {
+          console.log(`📱 New OTP sent to ${user.phone}: ${newOTP}`);
+        }
+      } catch { /* ignore */ }
+    }
   };
 
   const handleVerify = async () => {
     const otpCode = otp.join("");
     if (otpCode.length !== 6) return;
-    if (!user?.email) { navigate("/customer/home"); return; }
+    if (!user?.phone) { navigate("/customer/home"); return; }
 
     setIsVerifying(true);
     
-    // For testing, accept "123456" as valid OTP
-    if (otpCode === "123456") {
-      setIsVerified(true);
-      setTimeout(() => {
-        navigate("/customer/home");
-      }, 1500);
-    } else {
-      setError("Invalid OTP. Use 123456 for testing.");
+    try {
+      const isValid = await verifyOTP(user.phone, otpCode);
+      if (isValid) {
+        setIsVerified(true);
+        setTimeout(() => {
+          navigate("/customer/home");
+        }, 1500);
+      } else {
+        setError("Invalid OTP. Please try again.");
+        setIsVerifying(false);
+      }
+    } catch (error) {
+      setError("Verification failed. Please try again.");
       setIsVerifying(false);
     }
   };
@@ -93,11 +110,11 @@ export function CustomerOTPVerification() {
           <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-3">
             <Mail className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-white font-bold text-2xl mb-1">I-verify ang Email</h1>
+          <h1 className="text-white font-bold text-2xl mb-1">I-verify ang Mobile Number</h1>
           <p className="text-white/80 text-sm">
-            Nag-send kami ng code sa
+            Nag-send kami ng OTP sa
             <br />
-            <span className="font-semibold">{user?.email || "iyong email"}</span>
+            <span className="font-semibold">{user?.phone || "iyong mobile number"}</span>
           </p>
         </div>
       </div>

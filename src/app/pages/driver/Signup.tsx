@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { ArrowLeft, User, Phone, Mail, Lock, Eye, EyeOff, Upload, FileText, CheckCircle } from "lucide-react";
-import { authApi, saveAuth } from "../../services/api";
+import { getStoredUser, authApi, saveAuth, type DriverData } from "../../services/api";
+import { sendOTP } from "../../../services/smsOTP";
 
 export function DriverSignup() {
   const navigate = useNavigate();
@@ -38,6 +39,10 @@ export function DriverSignup() {
       const licenseUrl = "placeholder_license_url";
       const res = await authApi.driverRegister({ ...formData, licenseUrl });
       saveAuth(res.token, res.driver, "driver");
+      
+      // Send SMS OTP for verification
+      await sendOTP(formData.phone, 'signup');
+      
       navigate("/driver/otp");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");

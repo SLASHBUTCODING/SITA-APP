@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { ArrowLeft, User, Phone, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { authApi, saveAuth } from "../../services/api";
+import { sendOTP } from "../../../services/smsOTP";
 
 export function CustomerSignup() {
   const navigate = useNavigate();
@@ -24,6 +25,10 @@ export function CustomerSignup() {
     try {
       const res = await authApi.customerRegister(formData);
       saveAuth(res.token, res.user, "user");
+      
+      // Send SMS OTP for verification
+      await sendOTP(formData.phone, 'signup');
+      
       navigate("/customer/otp");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
