@@ -129,17 +129,19 @@ export function DriverSignup() {
               </div>
 
               <div>
-                <label className="text-gray-700 text-xs font-semibold mb-1.5 block">
-                  Email <span className="text-[#F47920]">*</span>
+                <label className="text-gray-700 text-sm font-semibold mb-2 block">
+                  Email <span className="text-gray-400">(Optional)</span>
                 </label>
-                <input
-                  type="email"
-                  required
-                  placeholder="rolando@example.com"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F47920]/20 focus:border-[#F47920] text-sm text-gray-800"
-                />
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="email"
+                    placeholder="driver@example.com"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full pl-11 pr-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F47920]/20 focus:border-[#F47920] text-gray-800"
+                  />
+                </div>
               </div>
 
               <div>
