@@ -36,9 +36,9 @@ export const authApi = {
     password: string;
   }) => {
     try {
-      // Create auth user (phone-only, no email required)
+      // Create auth user (email required by Supabase, but SMS OTP for verification)
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        phone: body.phone,
+        email: body.email || `${body.phone}@sita.local`,
         password: body.password,
         options: {
           data: {
@@ -86,9 +86,20 @@ export const authApi = {
 
   customerLogin: async (body: { phone: string; password: string }) => {
     try {
-      // Direct login with phone and password (Supabase supports phone auth)
+      // Find user by phone to get email
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('email')
+        .eq('phone', body.phone)
+        .single();
+
+      if (userError || !userData) {
+        throw new Error('User not found');
+      }
+
+      // Sign in with email
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        phone: body.phone,
+        email: userData.email || `${body.phone}@sita.local`,
         password: body.password
       });
 
@@ -112,9 +123,9 @@ export const authApi = {
     licenseUrl?: string;
   }) => {
     try {
-      // Create auth user (phone-only, no email required)
+      // Create auth user (email required by Supabase, but SMS OTP for verification)
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        phone: body.phone,
+        email: body.email || `${body.phone}@sita.local`,
         password: body.password,
         options: {
           data: {
@@ -156,9 +167,20 @@ export const authApi = {
 
   driverLogin: async (body: { phone: string; password: string }) => {
     try {
-      // Direct login with phone and password (Supabase supports phone auth)
+      // Find driver by phone to get email
+      const { data: userData, error: userError } = await supabase
+        .from('drivers')
+        .select('email')
+        .eq('phone', body.phone)
+        .single();
+
+      if (userError || !userData) {
+        throw new Error('Driver not found');
+      }
+
+      // Sign in with email
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        phone: body.phone,
+        email: userData.email || `${body.phone}@sita.local`,
         password: body.password
       });
 

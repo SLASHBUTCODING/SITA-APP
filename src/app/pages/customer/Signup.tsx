@@ -121,12 +121,13 @@ export function CustomerSignup() {
           {/* Email */}
           <div>
             <label className="text-gray-700 text-sm font-semibold mb-2 block">
-              Email <span className="text-gray-400">(Optional)</span>
+              Email <span className="text-[#F47920]">*</span>
             </label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="email"
+                required
                 placeholder="juan@example.com"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
