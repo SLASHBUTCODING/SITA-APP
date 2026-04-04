@@ -36,11 +36,13 @@ export const authApi = {
     password: string;
   }) => {
     try {
-      // Create auth user (email required by Supabase, but SMS OTP for verification)
+      const emailToUse = body.email || `${body.phone}@sita.local`;
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: body.email || `${body.phone}@sita.local`,
+        email: emailToUse,
         password: body.password,
         options: {
+          emailRedirectTo: undefined,
           data: {
             first_name: body.firstName,
             last_name: body.lastName,
@@ -78,7 +80,16 @@ export const authApi = {
         throw profileError;
       }
 
-      return { success: true, token: authData.session?.access_token || '', user: profileData };
+      // Force sign-in immediately after register (bypasses email confirmation requirement)
+      const { data: signInData } = await supabase.auth.signInWithPassword({
+        email: emailToUse,
+        password: body.password,
+      });
+
+      const token = signInData?.session?.access_token || authData.session?.access_token || '';
+      localStorage.setItem('sita_user', JSON.stringify(profileData));
+      localStorage.setItem('sita_role', 'user');
+      return { success: true, token, user: profileData };
     } catch (error: any) {
       throw new Error(error.message || 'Registration failed');
     }
@@ -122,6 +133,7 @@ export const authApi = {
 
       if (authError) {
         if (authError.message?.includes('rate')) throw new Error('Too many login attempts. Please wait a few minutes.');
+        if (authError.message?.includes('Email not confirmed')) throw new Error('Account setup incomplete. Please sign up again.');
         throw authError;
       }
 
@@ -133,6 +145,8 @@ export const authApi = {
         .single();
 
       const user = profile || authData.user;
+      localStorage.setItem('sita_user', JSON.stringify(user));
+      localStorage.setItem('sita_role', 'user');
       return { success: true, token: authData.session?.access_token || '', user };
     } catch (error: any) {
       throw new Error(error.message);
@@ -151,11 +165,13 @@ export const authApi = {
     licenseUrl?: string;
   }) => {
     try {
-      // Create auth user (email required by Supabase, but SMS OTP for verification)
+      const emailToUse = body.email || `${body.phone}@sita.local`;
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: body.email || `${body.phone}@sita.local`,
+        email: emailToUse,
         password: body.password,
         options: {
+          emailRedirectTo: undefined,
           data: {
             first_name: body.firstName,
             last_name: body.lastName,
@@ -187,7 +203,16 @@ export const authApi = {
 
       if (profileError) throw profileError;
 
-      return { success: true, token: authData.session?.access_token || '', driver: profileData };
+      // Force sign-in immediately after register (bypasses email confirmation requirement)
+      const { data: signInData } = await supabase.auth.signInWithPassword({
+        email: emailToUse,
+        password: body.password,
+      });
+
+      const token = signInData?.session?.access_token || authData.session?.access_token || '';
+      localStorage.setItem('sita_user', JSON.stringify(profileData));
+      localStorage.setItem('sita_role', 'driver');
+      return { success: true, token, driver: profileData };
     } catch (error: any) {
       throw new Error(error.message);
     }
@@ -228,6 +253,7 @@ export const authApi = {
 
       if (authError) {
         if (authError.message?.includes('rate')) throw new Error('Too many login attempts. Please wait a few minutes.');
+        if (authError.message?.includes('Email not confirmed')) throw new Error('Account setup incomplete. Please sign up again.');
         throw authError;
       }
 
@@ -239,6 +265,8 @@ export const authApi = {
         .single();
 
       const driver = profile || authData.user;
+      localStorage.setItem('sita_user', JSON.stringify(driver));
+      localStorage.setItem('sita_role', 'driver');
       return { success: true, token: authData.session?.access_token || '', driver };
     } catch (error: any) {
       throw new Error(error.message);
