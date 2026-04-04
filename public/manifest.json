@@ -28,5 +28,6 @@
     }
   ],
   "categories": ["transportation", "lifestyle"],
-  "lang": "fil"
+  "lang": "fil",
+  "permissions": ["geolocation"]
 }

@@ -65,7 +65,7 @@ export function CustomerHome() {
 
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser");
+      setBookError("Location not supported on this device.");
       return;
     }
 
@@ -79,17 +79,22 @@ export function CustomerHome() {
         setCurrentCoords(coords);
         setPickup("Current Location (GPS)");
         setLocationLoading(false);
-        console.log("📍 Current location:", coords);
       },
       (error) => {
-        console.error("Error getting location:", error);
-        alert("Unable to get your location. Please enable location services.");
         setLocationLoading(false);
+        // iOS/Android compatible error codes: 1=denied, 2=unavailable, 3=timeout
+        if (error.code === 1) {
+          setBookError("Location access denied. Please allow location in your phone settings.");
+        } else if (error.code === 2) {
+          setBookError("Location unavailable. Please check your GPS signal.");
+        } else {
+          setBookError("Location request timed out. Try again.");
+        }
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
+        timeout: 15000,
+        maximumAge: 30000  // Accept 30s cached position - better for iOS battery
       }
     );
   };

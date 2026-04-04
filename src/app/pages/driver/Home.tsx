@@ -87,18 +87,24 @@ export function DriverHome() {
           };
           setCurrentCoords(coords);
           setLocationLoading(false);
-          console.log("📍 Driver location:", coords);
           resolve(coords);
         },
         (error) => {
-          console.error("Error getting driver location:", error);
           setLocationLoading(false);
+          // Error codes: 1=denied, 2=unavailable, 3=timeout (same on iOS and Android)
+          if (error.code === 1) {
+            console.warn('Location denied - user must enable in phone settings');
+          } else if (error.code === 2) {
+            console.warn('Location unavailable - check GPS signal');
+          } else {
+            console.warn('Location timeout - retrying with lower accuracy');
+          }
           resolve(null);
         },
         {
           enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0
+          timeout: 15000,
+          maximumAge: 30000  // Accept 30s cached fix - critical for iOS
         }
       );
     });
