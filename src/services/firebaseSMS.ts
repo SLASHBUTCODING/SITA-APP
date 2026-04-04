@@ -2,7 +2,7 @@
 // Real SMS integration using Firebase Authentication
 
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithPhoneNumber } from 'firebase/auth';
+import { getAuth, signInWithPhoneNumber, RecaptchaVerifier } from 'firebase/auth';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -19,30 +19,71 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
+// Add reCAPTCHA to Window interface
+declare global {
+  interface Window {
+    recaptchaVerifier: any;
+  }
+}
+
 export interface OTPData {
   phone: string;
-  otp: string;
+  otp?: string;
+  confirmationResult?: any;
   expiresAt: Date;
 }
 
-// Store OTPs in memory (fallback method)
+// Store OTPs in memory
 const otpStore = new Map<string, OTPData>();
+
+// Helper functions
+function formatPhoneNumber(phone: string): string {
+  // Convert to E.164 format for Firebase
+  if (phone.startsWith('+')) {
+    return phone;
+  }
+  if (phone.startsWith('09')) {
+    return '+63' + phone.substring(1);
+  }
+  return '+63' + phone;
+}
+
+function generateFallbackOTP(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
 
 export async function sendOTP(phone: string, purpose: 'signup' | 'login' = 'signup'): Promise<boolean> {
   try {
-    // For now, use fallback method since Firebase reCAPTCHA needs more setup
-    const otp = generateFallbackOTP();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    // Format phone number for Firebase (E.164 format)
+    const formattedPhone = formatPhoneNumber(phone);
     
-    // Store OTP
-    otpStore.set(phone, { phone, otp, expiresAt });
+    // Create reCAPTCHA verifier
+    window.recaptchaVerifier = new RecaptchaVerifier(auth, 'sign-in-button', {
+      'size': 'invisible',
+      'callback': (response: any) => {
+        console.log('reCAPTCHA solved');
+      }
+    });
+
+    // Send SMS OTP via Firebase
+    const confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, window.recaptchaVerifier);
     
-    console.log(`📱 SMS sent to ${phone}: Your SITA OTP is ${otp}`);
-    console.log(`📱 Firebase setup ready, using fallback for now`);
+    // Store confirmation result
+    otpStore.set(phone, { phone, confirmationResult, expiresAt: new Date(Date.now() + 10 * 60 * 1000) });
+    
+    console.log(`📱 Real Firebase SMS sent to ${phone}`);
+    console.log(`📱 Check your phone for the OTP!`);
     
     return true;
   } catch (error: any) {
-    console.error('Error sending SMS OTP:', error);
+    console.error('Firebase SMS error:', error);
+    
+    // Fallback to console OTP
+    const otp = generateFallbackOTP();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    otpStore.set(phone, { phone, otp, expiresAt });
+    
+    console.log(`📱 Firebase failed, using fallback OTP: ${otp}`);
     return false;
   }
 }
