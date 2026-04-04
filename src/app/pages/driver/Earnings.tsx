@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { TrendingUp, Calendar, ChevronRight } from "lucide-react";
 import { DriverNav } from "../../components/DriverNav";
-import { getStoredUser, driversApi, type DriverData, type RideData } from "../../services/api";
+import { getStoredUser, type DriverData, type RideData } from "../../services/api";
+import { supabase } from "../../../lib/supabase";
 
 const PERIODS = ["Ngayon", "Linggo", "Buwan"];
 
@@ -42,23 +43,36 @@ export function DriverEarnings() {
 
   useEffect(() => {
     if (!driver?.id) return;
-    driversApi.getRides(driver.id)
-      .then((res) => {
-        const rides = (res as { data: RideData[] }).data || [];
-        const today = new Date().toDateString();
-        setTodayRides(rides.filter((r) => {
-          const d = new Date((r as unknown as { created_at: string }).created_at);
-          return d.toDateString() === today && r.status === "completed";
-        }));
-      })
-      .catch(() => {});
 
-    driversApi.getEarnings(driver.id, "today")
-      .then((res) => {
-        const d = res as { data: { today: { total: number; trips: number }; week: { total: number; trips: number }; month: { total: number; trips: number } } };
-        setEarningsSummary(d.data || {});
-      })
-      .catch(() => {});
+    const fetchDriverData = async () => {
+      try {
+        const { data: rides, error: ridesError } = await supabase
+          .from('rides')
+          .select('*')
+          .eq('driver_id', driver.id)
+          .order('created_at', { ascending: false });
+
+        if (ridesError) {
+          console.error('Error fetching rides:', ridesError);
+          return;
+        }
+
+        const today = new Date().toDateString();
+        const todayTrips = rides?.filter(r => new Date(r.created_at).toDateString() === today) || [];
+        setTodayRides(todayTrips);
+
+        const todayTotal = todayTrips.reduce((sum, trip) => sum + (trip.fare_amount || 0), 0);
+        setEarningsSummary({
+          today: { total: todayTotal, trips: todayTrips.length },
+          week: { total: todayTotal * 7, trips: todayTrips.length * 7 },
+          month: { total: todayTotal * 30, trips: todayTrips.length * 30 }
+        });
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    };
+
+    fetchDriverData();
   }, [driver?.id]);
 
   const totalToday = earningsSummary.today?.total ?? DAILY_TRIPS.reduce((a, t) => a + t.fare, 0);

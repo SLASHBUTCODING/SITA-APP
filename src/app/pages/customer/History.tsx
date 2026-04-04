@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { Star, Filter, ChevronRight } from "lucide-react";
 import { CustomerNav } from "../../components/CustomerNav";
-import { getStoredUser, usersApi, type UserData, type RideData } from "../../services/api";
+import { getStoredUser, type UserData, type RideData } from "../../services/api";
+import { supabase } from "../../../lib/supabase";
 
 const DRIVER_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23E5E7EB'/%3E%3Cpath d='M50 45c8.284 0 15-6.716 15-15s-6.716-15-15-15-15 6.716-15 15 6.716 15 15 15zM50 50c-16.569 0-30 10.745-30 24v6h60v-6c0-13.255-13.431-24-30-24z' fill='%239CA3AF'/%3E%3C/svg%3E";
 const FILTERS = ["Lahat", "Completed", "Cancelled"];
@@ -17,10 +18,31 @@ export function CustomerHistory() {
 
   useEffect(() => {
     if (!user?.id) { setLoading(false); return; }
-    usersApi.getRides(user.id)
-      .then((res) => setTrips(res.data))
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    
+    // Get rides from Supabase
+    const fetchRides = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('rides')
+          .select('*')
+          .eq('customer_id', user.id)
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          console.error('Error fetching rides:', error);
+          setTrips([]);
+        } else {
+          setTrips(data || []);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        setTrips([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchRides();
   }, [user?.id]);
 
   const filtered = trips.filter((t) => {

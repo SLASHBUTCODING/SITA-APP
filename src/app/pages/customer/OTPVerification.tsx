@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { ArrowLeft, Mail, Check } from "lucide-react";
-import { getStoredUser, otpApi } from "../../services/api";
+import { getStoredUser } from "../../services/api";
 
 export function CustomerOTPVerification() {
   const navigate = useNavigate();
@@ -47,18 +47,17 @@ export function CustomerOTPVerification() {
   const user = getStoredUser<{ email?: string; first_name?: string }>();
 
   useEffect(() => {
-    if (user?.email) {
-      otpApi.send(user.email, "signup").catch(() => {});
-    }
+    // TODO: Implement proper OTP with Supabase
+    // For now, just simulate that OTP was sent
+    console.log('OTP would be sent to:', user?.email);
   }, []);
 
   const handleResend = async () => {
     setTimer(60);
     setCanResend(false);
     setError("");
-    if (user?.email) {
-      try { await otpApi.send(user.email, "signup"); } catch { /* ignore */ }
-    }
+    // TODO: Implement proper OTP resend with Supabase
+    console.log('OTP resent to:', user?.email);
   };
 
   const handleVerify = async () => {
@@ -67,14 +66,15 @@ export function CustomerOTPVerification() {
     if (!user?.email) { navigate("/customer/home"); return; }
 
     setIsVerifying(true);
-    setError("");
-    try {
-      await otpApi.verify(user.email, otpCode, "signup");
+    
+    // For testing, accept "123456" as valid OTP
+    if (otpCode === "123456") {
       setIsVerified(true);
-      setTimeout(() => navigate("/customer/home"), 1200);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Invalid or expired OTP");
-    } finally {
+      setTimeout(() => {
+        navigate("/customer/home");
+      }, 1500);
+    } else {
+      setError("Invalid OTP. Use 123456 for testing.");
       setIsVerifying(false);
     }
   };

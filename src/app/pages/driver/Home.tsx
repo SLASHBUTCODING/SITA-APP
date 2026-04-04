@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Bell, TrendingUp, Zap } from "lucide-react";
 import { MapView } from "../../components/MapView";
 import { DriverNav } from "../../components/DriverNav";
-import { getStoredUser, driversApi, type DriverData } from "../../services/api";
+import { getStoredUser, type DriverData } from "../../services/api";
 import { driverGoOnline, driverGoOffline } from "../../services/socket";
 import { supabase } from "../../../lib/supabase";
 
@@ -47,11 +47,10 @@ export function DriverHome() {
     setIsOnline(next);
     try {
       if (next) {
-        driverGoOnline(driverId, 14.5995, 120.9842);
+        await driverGoOnline(driverId, 14.5995, 120.9842);
       } else {
-        driverGoOffline(driverId);
+        await driverGoOffline(driverId);
       }
-      await driversApi.updateStatus(driverId, next);
     } catch {
       setIsOnline(!next);
     }
