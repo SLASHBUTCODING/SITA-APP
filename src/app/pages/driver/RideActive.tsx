@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { motion } from "motion/react";
 import { MapPin, Phone, MessageCircle, Navigation, CheckCircle } from "lucide-react";
-import { MapView } from "../../components/MapView";
+import { SITAMap } from "../../components/SITAMap";
+import { startDriverLocationUpdates } from "../../../services/realtimeTracking";
 import { getStoredUser, ridesApi, type DriverData, type RideData } from "../../services/api";
 import { driverStartRide, driverCompleteRide } from "../../services/socket";
 
@@ -35,24 +36,6 @@ const PHASE_CONFIG = {
   },
 };
 
-const MARKERS_BY_PHASE = {
-  heading_pickup: [
-    { x: 50, y: 56, type: "pickup" as const },
-    { x: 68, y: 74, type: "dropoff" as const },
-    { x: 35, y: 45, type: "driver" as const },
-  ],
-  at_pickup: [
-    { x: 50, y: 56, type: "pickup" as const },
-    { x: 68, y: 74, type: "dropoff" as const },
-    { x: 50, y: 56, type: "driver" as const },
-  ],
-  in_ride: [
-    { x: 50, y: 56, type: "pickup" as const },
-    { x: 68, y: 74, type: "dropoff" as const },
-    { x: 60, y: 64, type: "driver" as const },
-  ],
-};
-
 export function DriverRideActive() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -62,15 +45,24 @@ export function DriverRideActive() {
   const [phase, setPhase] = useState<Phase>("heading_pickup");
   const [elapsed, setElapsed] = useState(0);
   const [rideData, setRideData] = useState<RideData | null>(null);
+  const [driverCoords, setDriverCoords] = useState<[number, number] | undefined>();
 
   const driver = getStoredUser<DriverData>();
   const driverId = driver?.id;
 
   useEffect(() => {
     if (rideId) {
-      ridesApi.get(rideId).then((res) => setRideData(res.data)).catch(() => {});
+      ridesApi.get(rideId).then((res: any) => setRideData(res.data)).catch(() => {});
     }
   }, [rideId]);
+
+  useEffect(() => {
+    if (!driverId) return;
+    const stop = startDriverLocationUpdates(driverId, (lat, lng) => {
+      setDriverCoords([lat, lng]);
+    });
+    return stop;
+  }, [driverId]);
 
   useEffect(() => {
     const interval = setInterval(() => setElapsed((e) => e + 1), 1000);
@@ -84,23 +76,20 @@ export function DriverRideActive() {
   const handleNext = async () => {
     if (phase === "heading_pickup") {
       if (rideId) {
-        try { await ridesApi.arrived(rideId); } catch { /* ignore */ }
+        try {
+          const { supabase } = await import('../../../lib/supabase');
+          await supabase.from('rides').update({ status: 'arrived' }).eq('id', rideId);
+        } catch { /* ignore */ }
       }
       setPhase("at_pickup");
     } else if (phase === "at_pickup") {
       if (rideId && driverId) {
-        try {
-          driverStartRide(driverId, rideId);
-          await ridesApi.start(rideId);
-        } catch { /* ignore */ }
+        try { await driverStartRide(driverId, rideId); } catch { /* ignore */ }
       }
       setPhase("in_ride");
     } else {
       if (rideId && driverId) {
-        try {
-          driverCompleteRide(driverId, rideId);
-          await ridesApi.complete(rideId);
-        } catch { /* ignore */ }
+        try { await driverCompleteRide(driverId, rideId); } catch { /* ignore */ }
       }
       navigate("/driver/done", { state: { rideId, rideData } });
     }
@@ -110,7 +99,10 @@ export function DriverRideActive() {
     <div className="relative h-full w-full bg-white flex flex-col overflow-hidden">
       {/* Map */}
       <div className="flex-1 relative">
-        <MapView markers={MARKERS_BY_PHASE[phase]} className="w-full h-full" label="Poblacion Area" />
+        <SITAMap
+          driverLocation={driverCoords}
+          className="w-full h-full"
+        />
 
         {/* Phase status badge */}
         <motion.div

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { motion } from "motion/react";
 import { MapPin, X, Check, Phone, Clock } from "lucide-react";
-import { MapView } from "../../components/MapView";
+import { SITAMap } from "../../components/SITAMap";
 import { getStoredUser, ridesApi, type DriverData } from "../../services/api";
 import { driverAcceptRide } from "../../services/socket";
 import { supabase } from "../../../lib/supabase";
@@ -10,11 +10,6 @@ import { supabase } from "../../../lib/supabase";
 const CUSTOMER_IMAGE =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23E5E7EB'/%3E%3Cpath d='M50 45c8.284 0 15-6.716 15-15s-6.716-15-15-15-15 6.716-15 15 6.716 15 15 15zM50 50c-16.569 0-30 10.745-30 24v6h60v-6c0-13.255-13.431-24-30-24z' fill='%239CA3AF'/%3E%3C/svg%3E";
 
-const REQUEST_MARKERS = [
-  { x: 50, y: 56, type: "pickup" as const },
-  { x: 68, y: 74, type: "dropoff" as const },
-  { x: 35, y: 45, type: "driver" as const },
-];
 
 export function DriverRequest() {
   const navigate = useNavigate();
@@ -54,8 +49,7 @@ export function DriverRequest() {
     }
     setAccepted(true);
     try {
-      driverAcceptRide(driverId, state.rideId);
-      await ridesApi.accept(state.rideId);
+      await driverAcceptRide(driverId, state.rideId);
     } catch { /* ignore, socket handles it */ }
     setTimeout(() => navigate("/driver/active", { state: { rideId: state.rideId } }), 1200);
   };
@@ -64,7 +58,7 @@ export function DriverRequest() {
     <div className="relative h-full w-full bg-[#1a1a2e] flex flex-col overflow-hidden">
       {/* Map background */}
       <div className="flex-1 relative">
-        <MapView markers={REQUEST_MARKERS} className="w-full h-full" label="Poblacion Area" />
+        <SITAMap className="w-full h-full" />
 
         {/* Timer ring overlay */}
         <div className="absolute top-10 left-0 right-0 flex justify-center pointer-events-none">
