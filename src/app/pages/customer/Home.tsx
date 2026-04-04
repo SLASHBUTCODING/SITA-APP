@@ -6,7 +6,6 @@ import { SITAMap } from "../../components/SITAMap";
 import { watchNearbyDrivers } from "../../../services/realtimeTracking";
 import { CustomerNav } from "../../components/CustomerNav";
 import { getStoredUser, ridesApi, type UserData, type RideData } from "../../services/api";
-import { supabase } from "../../../lib/supabase";
 
 const QUICK_DESTINATIONS = [
   { icon: "🏠", label: "Home", address: "Blk 5 Lot 12, Brgy. San Jose" },
@@ -109,7 +108,7 @@ export function CustomerHome() {
         dropoffLongitude: 120.9870,
         paymentMethod: "cash",
       });
-      const ride: RideData = res.data;
+      const ride = (res as any)?.data as RideData;
       navigate("/customer/finding", { state: { rideId: ride.id, pickup, dropoff } });
     } catch (err) {
       setBookError(err instanceof Error ? err.message : "Booking failed");

@@ -86,26 +86,54 @@ export const authApi = {
 
   customerLogin: async (body: { phone: string; password: string }) => {
     try {
-      // Find user by phone to get email
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('email')
-        .eq('phone', body.phone)
-        .single();
+      // Try email derived from phone first (avoids extra DB lookup)
+      const derivedEmail = `${body.phone}@sita.local`;
 
-      if (userError || !userData) {
-        throw new Error('User not found');
-      }
+      // Attempt sign-in with derived email first
+      let authData: any = null;
+      let authError: any = null;
 
-      // Sign in with email
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: userData.email || `${body.phone}@sita.local`,
+      const attempt1 = await supabase.auth.signInWithPassword({
+        email: derivedEmail,
         password: body.password
       });
 
-      if (authError) throw authError;
+      if (attempt1.error) {
+        // Fallback: look up real email from DB
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('email')
+          .eq('phone', body.phone)
+          .single();
 
-      return { success: true, token: authData.session?.access_token || '', user: authData.user };
+        if (userError || !userData?.email) {
+          throw new Error('User not found. Please sign up first.');
+        }
+
+        const attempt2 = await supabase.auth.signInWithPassword({
+          email: userData.email,
+          password: body.password
+        });
+        authData = attempt2.data;
+        authError = attempt2.error;
+      } else {
+        authData = attempt1.data;
+      }
+
+      if (authError) {
+        if (authError.message?.includes('rate')) throw new Error('Too many login attempts. Please wait a few minutes.');
+        throw authError;
+      }
+
+      // Fetch and cache full user profile
+      const { data: profile } = await supabase
+        .from('users')
+        .select('*')
+        .eq('phone', body.phone)
+        .single();
+
+      const user = profile || authData.user;
+      return { success: true, token: authData.session?.access_token || '', user };
     } catch (error: any) {
       throw new Error(error.message);
     }
@@ -167,26 +195,51 @@ export const authApi = {
 
   driverLogin: async (body: { phone: string; password: string }) => {
     try {
-      // Find driver by phone to get email
-      const { data: userData, error: userError } = await supabase
-        .from('drivers')
-        .select('email')
-        .eq('phone', body.phone)
-        .single();
+      const derivedEmail = `${body.phone}@sita.local`;
 
-      if (userError || !userData) {
-        throw new Error('Driver not found');
-      }
+      let authData: any = null;
+      let authError: any = null;
 
-      // Sign in with email
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: userData.email || `${body.phone}@sita.local`,
+      const attempt1 = await supabase.auth.signInWithPassword({
+        email: derivedEmail,
         password: body.password
       });
 
-      if (authError) throw authError;
+      if (attempt1.error) {
+        const { data: driverData, error: driverError } = await supabase
+          .from('drivers')
+          .select('email')
+          .eq('phone', body.phone)
+          .single();
 
-      return { success: true, token: authData.session?.access_token || '', driver: authData.user };
+        if (driverError || !driverData?.email) {
+          throw new Error('Driver not found. Please sign up first.');
+        }
+
+        const attempt2 = await supabase.auth.signInWithPassword({
+          email: driverData.email,
+          password: body.password
+        });
+        authData = attempt2.data;
+        authError = attempt2.error;
+      } else {
+        authData = attempt1.data;
+      }
+
+      if (authError) {
+        if (authError.message?.includes('rate')) throw new Error('Too many login attempts. Please wait a few minutes.');
+        throw authError;
+      }
+
+      // Fetch and cache full driver profile
+      const { data: profile } = await supabase
+        .from('drivers')
+        .select('*')
+        .eq('phone', body.phone)
+        .single();
+
+      const driver = profile || authData.user;
+      return { success: true, token: authData.session?.access_token || '', driver };
     } catch (error: any) {
       throw new Error(error.message);
     }
@@ -194,31 +247,31 @@ export const authApi = {
 
   getMe: async () => {
     try {
+      // Use cached user from localStorage first - avoids unnecessary DB calls
+      const cached = localStorage.getItem('sita_user');
+      const role = localStorage.getItem('sita_role');
+      if (cached && role) {
+        return { success: true, data: JSON.parse(cached), role };
+      }
+
+      // Fallback: fetch from Supabase auth
       const { data: { user }, error } = await supabase.auth.getUser();
       if (error) throw error;
-      
-      // Check if user or driver
-      const { data: userData } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', user?.id)
-        .single();
-      
-      if (userData) {
-        return { success: true, data: userData, role: 'user' };
-      }
 
-      const { data: driverData } = await supabase
-        .from('drivers')
+      const storedRole = localStorage.getItem('sita_role');
+      const table = storedRole === 'driver' ? 'drivers' : 'users';
+
+      const { data: profileData, error: profileError } = await supabase
+        .from(table)
         .select('*')
         .eq('id', user?.id)
         .single();
 
-      if (driverData) {
-        return { success: true, data: driverData, role: 'driver' };
-      }
+      if (profileError || !profileData) throw new Error('User not found');
 
-      throw new Error('User not found');
+      // Cache result
+      localStorage.setItem('sita_user', JSON.stringify(profileData));
+      return { success: true, data: profileData, role: storedRole || 'user' };
     } catch (error: any) {
       throw new Error(error.message);
     }

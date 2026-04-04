@@ -1,24 +1,24 @@
 // Real-time driver tracking service using Supabase Realtime
 import { supabase } from '../lib/supabase';
 
-export interface DriverLocation {
-  id: string;
-  driver_id: string;
-  lat: number;
-  lng: number;
-  heading?: number;
-  speed?: number;
-  updated_at: string;
+// ─── Throttle helper ──────────────────────────────────────────
+function throttle<T extends (...args: any[]) => any>(fn: T, limitMs: number): T {
+  let lastCall = 0;
+  return ((...args: any[]) => {
+    const now = Date.now();
+    if (now - lastCall >= limitMs) {
+      lastCall = now;
+      return fn(...args);
+    }
+  }) as T;
 }
 
-// Update driver location in Supabase (called continuously while driving)
-export async function updateDriverLocation(
+// ─── Update driver location (throttled - max 1 write per 10s) ─
+const _updateDriverLocation = async (
   driverId: string,
   lat: number,
   lng: number,
-  heading?: number,
-  speed?: number
-) {
+) => {
   const { error } = await supabase
     .from('drivers')
     .update({
@@ -30,9 +30,11 @@ export async function updateDriverLocation(
 
   if (error) console.error('Error updating driver location:', error);
   return !error;
-}
+};
 
-// Watch a specific driver's location (for customer during ride)
+export const updateDriverLocation = throttle(_updateDriverLocation, 10000);
+
+// ─── Watch a specific driver's location (for customer during ride) ─
 export function watchDriverLocation(
   driverId: string,
   onUpdate: (lat: number, lng: number) => void
@@ -56,17 +58,17 @@ export function watchDriverLocation(
     )
     .subscribe();
 
-  // Return cleanup function
   return () => {
     supabase.removeChannel(channel);
   };
 }
 
-// Watch all nearby online drivers (for customer home)
+// ─── Watch nearby online drivers (debounced - max 1 refetch per 15s) ─
 export function watchNearbyDrivers(
   onUpdate: (drivers: { id: string; lat: number; lng: number; name: string }[]) => void
 ) {
-  // Initial fetch of online drivers
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
   const fetchOnlineDrivers = async () => {
     const { data, error } = await supabase
       .from('drivers')
@@ -86,31 +88,33 @@ export function watchNearbyDrivers(
     }
   };
 
+  // Initial fetch
   fetchOnlineDrivers();
 
-  // Subscribe to real-time updates
   const channel = supabase
     .channel('nearby-drivers')
     .on(
       'postgres_changes',
       {
-        event: '*',
+        event: 'UPDATE',
         schema: 'public',
         table: 'drivers',
       },
       () => {
-        // Re-fetch on any driver change
-        fetchOnlineDrivers();
+        // Debounce: only re-fetch after 15s of inactivity to prevent hammering
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(fetchOnlineDrivers, 15000);
       }
     )
     .subscribe();
 
   return () => {
+    if (debounceTimer) clearTimeout(debounceTimer);
     supabase.removeChannel(channel);
   };
 }
 
-// Watch ride status changes
+// ─── Watch ride status changes ────────────────────────────────
 export function watchRideStatus(
   rideId: string,
   onUpdate: (status: string, driverLat?: number, driverLng?: number) => void
@@ -127,7 +131,6 @@ export function watchRideStatus(
       },
       async (payload: any) => {
         const ride = payload.new;
-        // If ride has a driver, also get driver location
         if (ride.driver_id) {
           const { data: driver } = await supabase
             .from('drivers')
@@ -135,11 +138,7 @@ export function watchRideStatus(
             .eq('id', ride.driver_id)
             .single();
 
-          onUpdate(
-            ride.status,
-            driver?.current_latitude,
-            driver?.current_longitude
-          );
+          onUpdate(ride.status, driver?.current_latitude, driver?.current_longitude);
         } else {
           onUpdate(ride.status);
         }
@@ -152,12 +151,14 @@ export function watchRideStatus(
   };
 }
 
-// Start continuous location updates for driver (every 5 seconds)
+// ─── Continuous GPS tracking for driver (throttled to 1 update per 10s) ─
 export function startDriverLocationUpdates(
   driverId: string,
   onLocationUpdate?: (lat: number, lng: number) => void
 ) {
   let watchId: number | null = null;
+  let lastLat: number | null = null;
+  let lastLng: number | null = null;
 
   if (!navigator.geolocation) {
     console.warn('Geolocation not supported');
@@ -166,22 +167,31 @@ export function startDriverLocationUpdates(
 
   watchId = navigator.geolocation.watchPosition(
     (position) => {
-      const { latitude: lat, longitude: lng, heading, speed } = position.coords;
-      updateDriverLocation(driverId, lat, lng, heading || undefined, speed || undefined);
-      if (onLocationUpdate) onLocationUpdate(lat, lng);
-      console.log(`📍 Driver location updated: ${lat}, ${lng}`);
+      const { latitude: lat, longitude: lng } = position.coords;
+
+      // Only update if moved more than ~10 meters (avoid micro-updates)
+      const moved =
+        lastLat === null ||
+        Math.abs(lat - lastLat) > 0.0001 ||
+        Math.abs(lng - lastLng!) > 0.0001;
+
+      if (moved) {
+        lastLat = lat;
+        lastLng = lng;
+        updateDriverLocation(driverId, lat, lng); // already throttled to 10s
+        if (onLocationUpdate) onLocationUpdate(lat, lng);
+      }
     },
     (error) => {
-      console.error('Geolocation error:', error);
+      console.error('Geolocation error:', error.message);
     },
     {
       enableHighAccuracy: true,
-      maximumAge: 5000,
-      timeout: 10000,
+      maximumAge: 10000,
+      timeout: 15000,
     }
   );
 
-  // Return cleanup function
   return () => {
     if (watchId !== null) {
       navigator.geolocation.clearWatch(watchId);

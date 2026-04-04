@@ -2,24 +2,13 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import { X, MapPin, ChevronLeft, Phone, MessageCircle } from "lucide-react";
-import { MapView } from "../../components/MapView";
+import { SITAMap } from "../../components/SITAMap";
 import { ridesApi, type RideData } from "../../services/api";
-import { customerWatchDriver } from "../../services/socket";
 import { supabase } from "../../../lib/supabase";
 
 const DRIVER_IMAGE =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23E5E7EB'/%3E%3Cpath d='M50 45c8.284 0 15-6.716 15-15s-6.716-15-15-15-15 6.716-15 15 6.716 15 15 15zM50 50c-16.569 0-30 10.745-30 24v6h60v-6c0-13.255-13.431-24-30-24z' fill='%239CA3AF'/%3E%3C/svg%3E";
 
-const MARKERS = [
-  { x: 50, y: 56, type: "pickup" as const },
-  { x: 68, y: 74, type: "dropoff" as const },
-];
-const SEARCHING_MARKERS = [
-  { x: 50, y: 56, type: "pickup" as const },
-  { x: 32, y: 38, type: "driver" as const },
-  { x: 68, y: 74, type: "driver2" as const },
-  { x: 15, y: 56, type: "driver3" as const },
-];
 
 export function CustomerFinding() {
   const navigate = useNavigate();
@@ -59,7 +48,9 @@ export function CustomerFinding() {
 
   const handleCancel = async () => {
     if (rideId) {
-      try { await ridesApi.cancel(rideId, "Customer cancelled"); } catch { /* ignore */ }
+      try {
+        await supabase.from('rides').update({ status: 'cancelled' }).eq('id', rideId);
+      } catch { /* ignore */ }
     }
     navigate("/customer/home");
   };
@@ -67,12 +58,7 @@ export function CustomerFinding() {
   return (
     <div className="relative h-full w-full bg-white flex flex-col overflow-hidden">
       <div className="flex-1 relative">
-        <MapView
-          markers={phase === "searching" ? SEARCHING_MARKERS : MARKERS}
-          showDriverMoving={phase === "searching"}
-          className="w-full h-full"
-          label="Poblacion Area"
-        />
+        <SITAMap className="w-full h-full" />
         <button
           onClick={() => navigate("/customer/home")}
           className="absolute top-12 left-4 w-9 h-9 bg-white rounded-full shadow-md flex items-center justify-center z-10"

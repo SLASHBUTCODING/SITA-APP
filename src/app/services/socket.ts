@@ -30,11 +30,8 @@ export function driverUpdateLocation(
   driverId: string,
   latitude: number,
   longitude: number,
-  speed?: number,
-  heading?: number
 ) {
-  // Update location in database
-  const locationUpdate = supabase
+  return supabase
     .from('drivers')
     .update({ 
       current_latitude: latitude, 
@@ -42,19 +39,6 @@ export function driverUpdateLocation(
       location_updated_at: new Date().toISOString()
     })
     .eq('id', driverId);
-
-  // Add to location history
-  supabase
-    .from('driver_locations')
-    .insert([{
-      driver_id: driverId,
-      latitude,
-      longitude,
-      speed: speed || null,
-      heading: heading || null
-    }]);
-
-  return locationUpdate;
 }
 
 export function driverAcceptRide(driverId: string, rideId: string) {
