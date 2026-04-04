@@ -5,7 +5,8 @@ import { Bell, TrendingUp, Zap } from "lucide-react";
 import { MapView } from "../../components/MapView";
 import { DriverNav } from "../../components/DriverNav";
 import { getStoredUser, driversApi, type DriverData } from "../../services/api";
-import { driverGoOnline, driverGoOffline, getSocket } from "../../services/socket";
+import { driverGoOnline, driverGoOffline } from "../../services/socket";
+import { supabase } from "../../../lib/supabase";
 
 const DRIVER_IMAGE =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23E5E7EB'/%3E%3Cpath d='M50 45c8.284 0 15-6.716 15-15s-6.716-15-15-15-15 6.716-15 15 6.716 15 15 15zM50 50c-16.569 0-30 10.745-30 24v6h60v-6c0-13.255-13.431-24-30-24z' fill='%239CA3AF'/%3E%3C/svg%3E";
@@ -31,11 +32,17 @@ export function DriverHome() {
   const driverId = driver?.id;
 
   useEffect(() => {
-    const socket = getSocket();
-    socket.on("ride:available", (data: { pickupAddress: string; dropoffAddress: string }) => {
-      setIncomingRide(data);
-    });
-    return () => { socket.off("ride:available"); };
+    // Subscribe to ride requests via Supabase
+    const subscription = supabase
+      .channel('ride-requests')
+      .on('broadcast', { event: 'ride-requested' }, (payload: any) => {
+        setIncomingRide(payload.payload);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
   }, []);
 
   const handleToggleOnline = async () => {

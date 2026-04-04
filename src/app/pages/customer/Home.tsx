@@ -5,7 +5,8 @@ import { Search, MapPin, ChevronRight, Bell, Navigation, Clock, X } from "lucide
 import { MapView } from "../../components/MapView";
 import { CustomerNav } from "../../components/CustomerNav";
 import { getStoredUser, ridesApi, type UserData, type RideData } from "../../services/api";
-import { customerWatchDrivers, getSocket } from "../../services/socket";
+import { customerWatchDrivers } from "../../services/socket";
+import { supabase } from "../../../lib/supabase";
 
 const QUICK_DESTINATIONS = [
   { icon: "🏠", label: "Home", address: "Blk 5 Lot 12, Brgy. San Jose" },
@@ -42,17 +43,24 @@ export function CustomerHome() {
   const displayName = user ? `${user.first_name} ${user.last_name}` : "Pasahero";
 
   useEffect(() => {
-    const socket = getSocket();
+    // Use Supabase Realtime instead of Socket.IO
     customerWatchDrivers();
-    socket.on("drivers:snapshot", (data: { drivers: { available: boolean }[] }) => {
-      setNearbyCount(data.drivers.filter((d) => d.available).length);
-    });
-    socket.on("drivers:updated", () => {
-      customerWatchDrivers();
-    });
+    
+    // Subscribe to driver updates via Supabase
+    const subscription = supabase
+      .channel('driver-updates')
+      .on('broadcast', { event: 'driver-online' }, (payload: any) => {
+        // Handle driver coming online
+        customerWatchDrivers(); // Refresh driver count
+      })
+      .on('broadcast', { event: 'driver-offline' }, (payload: any) => {
+        // Handle driver going offline
+        customerWatchDrivers(); // Refresh driver count
+      })
+      .subscribe();
+
     return () => {
-      socket.off("drivers:snapshot");
-      socket.off("drivers:updated");
+      supabase.removeChannel(subscription);
     };
   }, []);
 

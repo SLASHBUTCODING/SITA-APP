@@ -5,7 +5,7 @@ import { Shield, Phone, MessageCircle, MapPin, AlertTriangle, X } from "lucide-r
 import { MapView } from "../../components/MapView";
 import { SOSModal } from "../../components/SOSModal";
 import { ridesApi, type RideData } from "../../services/api";
-import { getSocket } from "../../services/socket";
+import { supabase } from "../../../lib/supabase";
 
 const DRIVER_IMAGE =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23E5E7EB'/%3E%3Cpath d='M50 45c8.284 0 15-6.716 15-15s-6.716-15-15-15-15 6.716-15 15 6.716 15 15 15zM50 50c-16.569 0-30 10.745-30 24v6h60v-6c0-13.255-13.431-24-30-24z' fill='%239CA3AF'/%3E%3C/svg%3E";
@@ -60,26 +60,24 @@ export function CustomerRide() {
 
   useEffect(() => {
     if (!rideId) return;
-    const socket = getSocket();
-    socket.on("ride:status-update", (data: { status: string }) => {
-      const statusMap: Record<string, number> = {
-        accepted: 0, arrived: 1, in_progress: 2, completed: 3,
-      };
-      const newStep = statusMap[data.status];
-      if (newStep !== undefined) setStep(newStep);
-    });
-    socket.on("driver:arrived-at-pickup", () => setStep(1));
-    socket.on("ride:started", () => setStep(2));
-    socket.on("ride:completed", () => {
-      navigate("/customer/complete", { state: { rideId, rideData } });
-    });
-    socket.on("driver:near-dropoff", () => setStep(3));
+
+    // Subscribe to ride updates via Supabase
+    const subscription = supabase
+      .channel(`ride-${rideId}`)
+      .on('broadcast', { event: 'ride-status-update' }, (payload: any) => {
+        const statusMap: Record<string, number> = {
+          accepted: 0, arrived: 1, in_progress: 2, completed: 3,
+        };
+        const newPhase = statusMap[payload.payload.status] ?? 0;
+        setStep(newPhase);
+      })
+      .on('broadcast', { event: 'driver-near-dropoff' }, () => {
+        setStep(3);
+      })
+      .subscribe();
+
     return () => {
-      socket.off("ride:status-update");
-      socket.off("driver:arrived-at-pickup");
-      socket.off("ride:started");
-      socket.off("ride:completed");
-      socket.off("driver:near-dropoff");
+      supabase.removeChannel(subscription);
     };
   }, [rideId, navigate, rideData]);
 

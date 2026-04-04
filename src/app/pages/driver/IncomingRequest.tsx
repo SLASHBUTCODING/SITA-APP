@@ -4,7 +4,8 @@ import { motion } from "motion/react";
 import { MapPin, X, Check, Phone, Clock } from "lucide-react";
 import { MapView } from "../../components/MapView";
 import { getStoredUser, ridesApi, type DriverData } from "../../services/api";
-import { driverAcceptRide, getSocket } from "../../services/socket";
+import { driverAcceptRide } from "../../services/socket";
+import { supabase } from "../../../lib/supabase";
 
 const CUSTOMER_IMAGE =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23E5E7EB'/%3E%3Cpath d='M50 45c8.284 0 15-6.716 15-15s-6.716-15-15-15-15 6.716-15 15 6.716 15 15 15zM50 50c-16.569 0-30 10.745-30 24v6h60v-6c0-13.255-13.431-24-30-24z' fill='%239CA3AF'/%3E%3C/svg%3E";
@@ -27,11 +28,17 @@ export function DriverRequest() {
   const driverId = driver?.id;
 
   useEffect(() => {
-    const socket = getSocket();
-    socket.on("ride:available", (data: { rideId: string; pickupAddress: string; dropoffAddress: string }) => {
-      navigate("/driver/request", { state: { rideId: data.rideId, pickupAddress: data.pickupAddress, dropoffAddress: data.dropoffAddress } });
-    });
-    return () => { socket.off("ride:available"); };
+    // Subscribe to ride requests via Supabase
+    const subscription = supabase
+      .channel('ride-requests')
+      .on('broadcast', { event: 'ride-requested' }, (payload: any) => {
+        navigate("/driver/request", { state: { rideId: payload.payload.rideId, pickupAddress: payload.payload.pickupAddress, dropoffAddress: payload.payload.dropoffAddress } });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
   }, [navigate]);
 
   useEffect(() => {
