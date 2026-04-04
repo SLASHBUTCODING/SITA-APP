@@ -120,16 +120,11 @@ export async function resendOTP(phone: string): Promise<boolean> {
   return sendOTP(phone, 'signup');
 }
 
-// Helper functions
-function generateFallbackOTP(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
 // For development/testing - get current OTP
 export function getCurrentOTP(phone: string): string | null {
   const stored = otpStore.get(phone);
   if (stored && new Date() <= stored.expiresAt) {
-    return stored.otp;
+    return stored.otp || null;
   }
   return null;
 }
