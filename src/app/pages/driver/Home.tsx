@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import { Bell, TrendingUp, Zap } from "lucide-react";
-import { MapView } from "../../components/MapView";
+import { SITAMap } from "../../components/SITAMap";
+import { startDriverLocationUpdates } from "../../../services/realtimeTracking";
 import { DriverNav } from "../../components/DriverNav";
 import { getStoredUser, type DriverData } from "../../services/api";
 import { driverGoOnline, driverGoOffline } from "../../services/socket";
@@ -11,9 +12,6 @@ import { supabase } from "../../../lib/supabase";
 const DRIVER_IMAGE =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23E5E7EB'/%3E%3Cpath d='M50 45c8.284 0 15-6.716 15-15s-6.716-15-15-15-15 6.716-15 15 6.716 15 15 15zM50 50c-16.569 0-30 10.745-30 24v6h60v-6c0-13.255-13.431-24-30-24z' fill='%239CA3AF'/%3E%3C/svg%3E";
 
-const DRIVER_MARKERS = [
-  { x: 50, y: 56, type: "driver" as const },
-];
 
 const TIPS = [
   "Mga mataong oras: 6–9 AM at 4–7 PM",
@@ -34,17 +32,19 @@ export function DriverHome() {
   const driverId = driver?.id;
 
   useEffect(() => {
-    // Get driver's current location when online
+    let stopTracking: (() => void) | null = null;
+    
     if (isOnline && driverId) {
-      getCurrentLocation();
+      // Start continuous GPS updates to database
+      stopTracking = startDriverLocationUpdates(driverId, (lat, lng) => {
+        setCurrentCoords({ lat, lng });
+      });
     }
     
-    // TODO: Implement proper Supabase Realtime subscriptions
-    // For now, just log that we're listening for ride requests
     console.log('Listening for ride requests...');
     
     return () => {
-      // Cleanup when component unmounts
+      if (stopTracking) stopTracking();
     };
   }, [isOnline, driverId]);
 
@@ -180,7 +180,10 @@ export function DriverHome() {
 
       {/* Map */}
       <div className="relative z-10 flex-1 mx-4 rounded-2xl overflow-hidden">
-        <MapView markers={DRIVER_MARKERS} showDriverMoving={isOnline} className="w-full h-full" label="Inyong Lokasyon" />
+        <SITAMap
+          driverLocation={currentCoords ? [currentCoords.lat, currentCoords.lng] : undefined}
+          className="w-full h-full"
+        />
 
         {isOnline && (
           <AnimatePresence>

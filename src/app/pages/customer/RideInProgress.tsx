@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import { Shield, Phone, MessageCircle, MapPin, AlertTriangle, X } from "lucide-react";
-import { MapView } from "../../components/MapView";
+import { SITAMap } from "../../components/SITAMap";
+import { watchDriverLocation, watchRideStatus } from "../../../services/realtimeTracking";
 import { SOSModal } from "../../components/SOSModal";
 import { ridesApi, type RideData } from "../../services/api";
-import { supabase } from "../../../lib/supabase";
 
 const DRIVER_IMAGE =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23E5E7EB'/%3E%3Cpath d='M50 45c8.284 0 15-6.716 15-15s-6.716-15-15-15-15 6.716-15 15 6.716 15 15 15zM50 50c-16.569 0-30 10.745-30 24v6h60v-6c0-13.255-13.431-24-30-24z' fill='%239CA3AF'/%3E%3C/svg%3E";
@@ -17,28 +17,6 @@ const RIDE_STEPS = [
   "Malapit na sa destinasyon",
 ];
 
-const MARKERS_PROGRESS = [
-  [
-    { x: 50, y: 56, type: "pickup" as const },
-    { x: 68, y: 74, type: "dropoff" as const },
-    { x: 40, y: 60, type: "driver" as const },
-  ],
-  [
-    { x: 50, y: 56, type: "pickup" as const },
-    { x: 68, y: 74, type: "dropoff" as const },
-    { x: 50, y: 56, type: "driver" as const },
-  ],
-  [
-    { x: 50, y: 56, type: "pickup" as const },
-    { x: 68, y: 74, type: "dropoff" as const },
-    { x: 58, y: 62, type: "driver" as const },
-  ],
-  [
-    { x: 50, y: 56, type: "pickup" as const },
-    { x: 68, y: 74, type: "dropoff" as const },
-    { x: 66, y: 71, type: "driver" as const },
-  ],
-];
 
 export function CustomerRide() {
   const navigate = useNavigate();
@@ -52,11 +30,29 @@ export function CustomerRide() {
   const [showSOS, setShowSOS] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [rideData, setRideData] = useState<RideData | null>(initialRide || null);
+  const [driverCoords, setDriverCoords] = useState<[number, number] | undefined>();
+  const [customerCoords, setCustomerCoords] = useState<[number, number] | undefined>();
 
   useEffect(() => {
     const interval = setInterval(() => setElapsed((e) => e + 1), 1000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    // Get customer's current location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((pos) => {
+        setCustomerCoords([pos.coords.latitude, pos.coords.longitude]);
+      });
+    }
+    // Watch driver location in real-time
+    if (rideData?.driver_id) {
+      const cleanup = watchDriverLocation(rideData.driver_id, (lat, lng) => {
+        setDriverCoords([lat, lng]);
+      });
+      return cleanup;
+    }
+  }, [rideData?.driver_id]);
 
   useEffect(() => {
     if (!rideId) return;
@@ -85,7 +81,12 @@ export function CustomerRide() {
   return (
     <div className="relative h-full w-full bg-white flex flex-col overflow-hidden">
       <div className="flex-1 relative">
-        <MapView markers={MARKERS_PROGRESS[step]} className="w-full h-full" label="Poblacion Area" />
+        <SITAMap
+          customerLocation={customerCoords}
+          driverLocation={driverCoords}
+          showRoute={!!driverCoords && !!customerCoords}
+          className="w-full h-full"
+        />
 
         {/* Safety badge */}
         <motion.div

@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import { Search, MapPin, ChevronRight, Bell, Navigation, Clock, X } from "lucide-react";
-import { MapView } from "../../components/MapView";
+import { SITAMap } from "../../components/SITAMap";
+import { watchNearbyDrivers } from "../../../services/realtimeTracking";
 import { CustomerNav } from "../../components/CustomerNav";
 import { getStoredUser, ridesApi, type UserData, type RideData } from "../../services/api";
-import { customerWatchDrivers } from "../../services/socket";
 import { supabase } from "../../../lib/supabase";
 
 const QUICK_DESTINATIONS = [
@@ -38,6 +38,7 @@ export function CustomerHome() {
   const [nearbyCount, setNearbyCount] = useState(0);
   const [currentCoords, setCurrentCoords] = useState<{lat: number, lng: number} | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
+  const [nearbyDrivers, setNearbyDrivers] = useState<{id: string; lat: number; lng: number; name: string}[]>([]);
   const [booking, setBooking] = useState(false);
   const [bookError, setBookError] = useState("");
 
@@ -45,16 +46,16 @@ export function CustomerHome() {
   const displayName = user ? `${user.first_name} ${user.last_name}` : "Pasahero";
 
   useEffect(() => {
-    // Use Supabase to get nearby drivers count (simplified for now)
-    customerWatchDrivers();
+    // Watch nearby drivers with real-time updates
+    const cleanup = watchNearbyDrivers((drivers) => {
+      setNearbyDrivers(drivers);
+      setNearbyCount(drivers.length);
+    });
     
-    // TODO: Implement proper Supabase Realtime subscriptions
-    // For now, just set a placeholder count
-    setNearbyCount(3);
+    // Get current location on mount
+    getCurrentLocation();
     
-    return () => {
-      // Cleanup when component unmounts
-    };
+    return cleanup;
   }, []);
 
   const handleDestinationSelect = (address: string) => {
@@ -120,7 +121,11 @@ export function CustomerHome() {
     <div className="relative h-full w-full flex flex-col bg-white overflow-hidden">
       {/* Map */}
       <div className="absolute inset-0">
-        <MapView markers={DEFAULT_MARKERS} showDriverMoving className="w-full h-full" label="Poblacion Area" />
+        <SITAMap
+          customerLocation={currentCoords ? [currentCoords.lat, currentCoords.lng] : undefined}
+          nearbyDrivers={nearbyDrivers}
+          className="w-full h-full"
+        />
       </div>
 
       {/* Top Header */}
