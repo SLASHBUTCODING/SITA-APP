@@ -25,6 +25,26 @@ export function getStoredRole(): "user" | "driver" | "admin" | null {
   return localStorage.getItem("sita_role") as "user" | "driver" | "admin" | null;
 }
 
+// ─── Email OTP ───────────────────────────────────────────────
+
+export async function sendEmailOTP(email: string): Promise<void> {
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: { shouldCreateUser: false }
+  });
+  if (error) throw new Error(error.message);
+}
+
+export async function verifyEmailOTP(email: string, token: string): Promise<boolean> {
+  const { error } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type: 'email'
+  });
+  if (error) return false;
+  return true;
+}
+
 // ─── Auth ────────────────────────────────────────────────────
 
 export const authApi = {

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { ArrowLeft, User, Phone, Mail, Lock, Eye, EyeOff } from "lucide-react";
-import { authApi, saveAuth } from "../../services/api";
+import { authApi, saveAuth, sendEmailOTP } from "../../services/api";
 
 export function CustomerSignup() {
   const navigate = useNavigate();
@@ -19,12 +19,17 @@ export function CustomerSignup() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.email) { setError("Email is required for verification."); return; }
     setError("");
     setLoading(true);
     try {
       const res = await authApi.customerRegister(formData);
       saveAuth(res.token, res.user, "user");
-      navigate("/customer/home");
+      // Send email OTP for verification
+      await sendEmailOTP(formData.email);
+      // Store email so OTP page can use it
+      localStorage.setItem("sita_otp_email", formData.email);
+      navigate("/customer/otp");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
     } finally {
