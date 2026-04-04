@@ -58,11 +58,14 @@ export const authApi = {
     try {
       const emailToUse = body.email || `${body.phone}@sita.local`;
 
+      if (body.password.length < 6) {
+        throw new Error('Password must be at least 6 characters.');
+      }
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: emailToUse,
         password: body.password,
         options: {
-          emailRedirectTo: undefined,
           data: {
             first_name: body.firstName,
             last_name: body.lastName,
@@ -74,30 +77,54 @@ export const authApi = {
 
       if (authError) {
         if (authError.message.includes('already registered')) {
-          throw new Error('User with this email or phone already exists');
+          throw new Error('Email already registered. Please log in instead.');
         }
         throw authError;
       }
 
-      // Create user profile
-      const { data: profileData, error: profileError } = await supabase
+      // If Supabase returns no session after signUp, the email is already confirmed/exists
+      if (!authData.user) {
+        throw new Error('Email already registered. Please log in instead.');
+      }
+
+      // Check if profile already exists before inserting
+      const { data: existingProfile } = await supabase
         .from('users')
-        .insert([{
-          id: authData.user?.id,
-          first_name: body.firstName,
-          last_name: body.lastName,
-          phone: body.phone,
-          email: body.email || null,
-          password_hash: 'handled_by_supabase_auth'
-        }])
-        .select()
+        .select('id')
+        .eq('id', authData.user.id)
         .single();
 
-      if (profileError) {
-        if (profileError.code === '23505') {
-          throw new Error('Phone number or email already registered');
+      let profileData;
+      if (existingProfile) {
+        // Profile already exists, fetch it
+        const { data: fetchedProfile } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', authData.user.id)
+          .single();
+        profileData = fetchedProfile;
+      } else {
+        // Create user profile
+        const { data: insertedProfile, error: profileError } = await supabase
+          .from('users')
+          .insert([{
+            id: authData.user.id,
+            first_name: body.firstName,
+            last_name: body.lastName,
+            phone: body.phone,
+            email: body.email || null,
+            password_hash: 'handled_by_supabase_auth'
+          }])
+          .select()
+          .single();
+
+        if (profileError) {
+          if (profileError.code === '23505') {
+            throw new Error('Phone number or email already registered. Please log in instead.');
+          }
+          throw profileError;
         }
-        throw profileError;
+        profileData = insertedProfile;
       }
 
       // Force sign-in immediately after register (bypasses email confirmation requirement)
