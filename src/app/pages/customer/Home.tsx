@@ -36,6 +36,8 @@ export function CustomerHome() {
   const [dropoff, setDropoff] = useState("");
   const [activeField, setActiveField] = useState<"pickup" | "dropoff">("dropoff");
   const [nearbyCount, setNearbyCount] = useState(0);
+  const [currentCoords, setCurrentCoords] = useState<{lat: number, lng: number} | null>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
   const [booking, setBooking] = useState(false);
   const [bookError, setBookError] = useState("");
 
@@ -59,6 +61,37 @@ export function CustomerHome() {
     if (activeField === "pickup") setPickup(address);
     else setDropoff(address);
     setSearchFocused(false);
+  };
+
+  const getCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser");
+      return;
+    }
+
+    setLocationLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const coords = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        setCurrentCoords(coords);
+        setPickup("Current Location (GPS)");
+        setLocationLoading(false);
+        console.log("📍 Current location:", coords);
+      },
+      (error) => {
+        console.error("Error getting location:", error);
+        alert("Unable to get your location. Please enable location services.");
+        setLocationLoading(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
   };
 
   const handleBookNow = async () => {
@@ -136,10 +169,19 @@ export function CustomerHome() {
             {/* Pickup */}
             <div
               className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5 mb-2 cursor-pointer"
-              onClick={() => { setActiveField("pickup"); setSearchFocused(true); }}
+              onClick={() => { 
+                if (pickup === "Current Location") {
+                  getCurrentLocation();
+                } else {
+                  setActiveField("pickup"); 
+                  setSearchFocused(true); 
+                }
+              }}
             >
               <div className="w-3 h-3 rounded-full bg-green-500 border-2 border-white shadow" />
-              <span className="flex-1 text-sm text-gray-700 truncate">{pickup}</span>
+              <span className="flex-1 text-sm text-gray-700 truncate">
+                {pickup === "Current Location" && locationLoading ? "Getting location..." : pickup}
+              </span>
               <Navigation className="w-3.5 h-3.5 text-[#F47920]" />
             </div>
 
