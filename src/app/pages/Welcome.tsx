@@ -86,22 +86,53 @@ export function Welcome() {
         </p>
 
         <div className="flex gap-3 mb-4">
-          <motion.button
-            whileTap={{ scale: 0.97 }}
-            onClick={() => navigate("/customer/signup")}
-            className="flex-1 bg-[#F47920] text-white py-4 rounded-2xl font-bold text-sm shadow-lg shadow-orange-900/30 flex flex-col items-center gap-1"
-          >
-            <span className="text-2xl">👤</span>
-            Passenger
-          </motion.button>
-          <motion.button
-            whileTap={{ scale: 0.97 }}
-            onClick={() => navigate("/driver/signup")}
-            className="flex-1 bg-white/10 text-white py-4 rounded-2xl font-bold text-sm border border-white/20 flex flex-col items-center gap-1"
-          >
-            <span className="text-2xl">🛺</span>
-            Driver
-          </motion.button>
+          {/* Passenger Section */}
+          <div className="flex-1 bg-white/5 rounded-2xl p-3 border border-white/10">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-2xl">👤</span>
+              <span className="text-white font-semibold">Passenger</span>
+            </div>
+            <div className="space-y-2">
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={() => navigate("/customer/signup")}
+                className="w-full bg-[#F47920] text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-orange-900/30"
+              >
+                Sign Up
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={() => navigate("/customer/login")}
+                className="w-full bg-white/10 text-white py-3 rounded-xl font-bold text-sm border border-white/20"
+              >
+                Sign In
+              </motion.button>
+            </div>
+          </div>
+
+          {/* Driver Section */}
+          <div className="flex-1 bg-white/5 rounded-2xl p-3 border border-white/10">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-2xl">🛺</span>
+              <span className="text-white font-semibold">Driver</span>
+            </div>
+            <div className="space-y-2">
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={() => navigate("/driver/signup")}
+                className="w-full bg-[#F47920] text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-orange-900/30"
+              >
+                Sign Up
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={() => navigate("/driver/login")}
+                className="w-full bg-white/10 text-white py-3 rounded-xl font-bold text-sm border border-white/20"
+              >
+                Sign In
+              </motion.button>
+            </div>
+          </div>
         </div>
 
         <p className="text-center text-gray-500 text-xs">
