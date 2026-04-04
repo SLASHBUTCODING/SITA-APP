@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:3010/api";
+import { supabase } from '../../lib/supabase';
 
 function getToken(): string | null {
   return localStorage.getItem("sita_token");
@@ -25,48 +25,83 @@ export function getStoredRole(): "user" | "driver" | "admin" | null {
   return localStorage.getItem("sita_role") as "user" | "driver" | "admin" | null;
 }
 
-async function request<T>(
-  path: string,
-  options: RequestInit = {}
-): Promise<T> {
-  const token = getToken();
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...(options.headers || {}),
-  };
-
-  const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
-  const data = await res.json();
-
-  if (!res.ok) {
-    throw new Error(data.message || "Request failed");
-  }
-
-  return data as T;
-}
-
 // ─── Auth ────────────────────────────────────────────────────
 
 export const authApi = {
-  customerRegister: (body: {
+  customerRegister: async (body: {
     firstName: string;
     lastName: string;
     phone: string;
     email: string;
     password: string;
-  }) => request<{ success: boolean; token: string; user: unknown }>("/auth/customer/register", {
-    method: "POST",
-    body: JSON.stringify(body),
-  }),
+  }) => {
+    try {
+      // Create auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: body.email || `${body.phone}@sita.local`,
+        password: body.password,
+        options: {
+          data: {
+            first_name: body.firstName,
+            last_name: body.lastName,
+            phone: body.phone,
+            user_type: 'customer'
+          }
+        }
+      });
 
-  customerLogin: (body: { phone: string; password: string }) =>
-    request<{ success: boolean; token: string; user: unknown }>("/auth/customer/login", {
-      method: "POST",
-      body: JSON.stringify(body),
-    }),
+      if (authError) throw authError;
 
-  driverRegister: (body: {
+      // Create user profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('users')
+        .insert([{
+          id: authData.user?.id,
+          first_name: body.firstName,
+          last_name: body.lastName,
+          phone: body.phone,
+          email: body.email || null,
+          password_hash: 'handled_by_supabase_auth'
+        }])
+        .select()
+        .single();
+
+      if (profileError) throw profileError;
+
+      return { success: true, token: authData.session?.access_token || '', user: profileData };
+    } catch (error: any) {
+      throw new Error(error.message);
+    }
+  },
+
+  customerLogin: async (body: { phone: string; password: string }) => {
+    try {
+      // Find user by phone
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('email')
+        .eq('phone', body.phone)
+        .single();
+
+      if (userError || !userData) {
+        throw new Error('User not found');
+      }
+
+      // Sign in with email
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: userData.email || `${body.phone}@sita.local`,
+        password: body.password
+      });
+
+      if (authError) throw authError;
+
+      return { success: true, token: authData.session?.access_token || '', user: authData.user };
+    } catch (error: any) {
+      throw new Error(error.message);
+    }
+  },
+
+  driverRegister: async (body: {
     firstName: string;
     lastName: string;
     phone: string;
@@ -76,19 +111,108 @@ export const authApi = {
     vehicleModel: string;
     vehicleColor: string;
     licenseUrl?: string;
-  }) => request<{ success: boolean; token: string; driver: unknown }>("/auth/driver/register", {
-    method: "POST",
-    body: JSON.stringify(body),
-  }),
+  }) => {
+    try {
+      // Create auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: body.email || `${body.phone}@sita.local`,
+        password: body.password,
+        options: {
+          data: {
+            first_name: body.firstName,
+            last_name: body.lastName,
+            phone: body.phone,
+            user_type: 'driver'
+          }
+        }
+      });
 
-  driverLogin: (body: { phone: string; password: string }) =>
-    request<{ success: boolean; token: string; driver: unknown }>("/auth/driver/login", {
-      method: "POST",
-      body: JSON.stringify(body),
-    }),
+      if (authError) throw authError;
 
-  getMe: () =>
-    request<{ success: boolean; data: unknown; role: string }>("/auth/me"),
+      // Create driver profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('drivers')
+        .insert([{
+          id: authData.user?.id,
+          first_name: body.firstName,
+          last_name: body.lastName,
+          phone: body.phone,
+          email: body.email || null,
+          plate_number: body.plateNumber,
+          vehicle_model: body.vehicleModel,
+          vehicle_color: body.vehicleColor,
+          license_url: body.licenseUrl || null,
+          password_hash: 'handled_by_supabase_auth'
+        }])
+        .select()
+        .single();
+
+      if (profileError) throw profileError;
+
+      return { success: true, token: authData.session?.access_token || '', driver: profileData };
+    } catch (error: any) {
+      throw new Error(error.message);
+    }
+  },
+
+  driverLogin: async (body: { phone: string; password: string }) => {
+    try {
+      // Find driver by phone
+      const { data: userData, error: userError } = await supabase
+        .from('drivers')
+        .select('email')
+        .eq('phone', body.phone)
+        .single();
+
+      if (userError || !userData) {
+        throw new Error('Driver not found');
+      }
+
+      // Sign in with email
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: userData.email || `${body.phone}@sita.local`,
+        password: body.password
+      });
+
+      if (authError) throw authError;
+
+      return { success: true, token: authData.session?.access_token || '', driver: authData.user };
+    } catch (error: any) {
+      throw new Error(error.message);
+    }
+  },
+
+  getMe: async () => {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) throw error;
+      
+      // Check if user or driver
+      const { data: userData } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', user?.id)
+        .single();
+      
+      if (userData) {
+        return { success: true, data: userData, role: 'user' };
+      }
+
+      const { data: driverData } = await supabase
+        .from('drivers')
+        .select('*')
+        .eq('id', user?.id)
+        .single();
+
+      if (driverData) {
+        return { success: true, data: driverData, role: 'driver' };
+      }
+
+      throw new Error('User not found');
+    } catch (error: any) {
+      throw new Error(error.message);
+    }
+  },
 };
 
 // ─── Rides ───────────────────────────────────────────────────
