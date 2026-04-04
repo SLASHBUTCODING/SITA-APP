@@ -33,19 +33,9 @@ export function DriverSignup() {
     setError("");
     setLoading(true);
     try {
-      let licenseUrl: string | undefined;
-      if (licenseFile) {
-        const fd = new FormData();
-        fd.append("file", licenseFile);
-        const uploadRes = await fetch("http://localhost:3010/api/auth/upload", {
-          method: "POST",
-          body: fd,
-        });
-        if (uploadRes.ok) {
-          const uploadData = await uploadRes.json() as { url?: string };
-          licenseUrl = uploadData.url;
-        }
-      }
+      // For now, skip file upload until we set up Supabase Storage
+      // TODO: Implement Supabase Storage for file uploads
+      const licenseUrl = "placeholder_license_url";
       const res = await authApi.driverRegister({ ...formData, licenseUrl });
       saveAuth(res.token, res.driver, "driver");
       navigate("/driver/otp");
