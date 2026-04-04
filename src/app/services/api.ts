@@ -50,7 +50,12 @@ export const authApi = {
         }
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        if (authError.message.includes('already registered')) {
+          throw new Error('User with this email or phone already exists');
+        }
+        throw authError;
+      }
 
       // Create user profile
       const { data: profileData, error: profileError } = await supabase
@@ -66,11 +71,16 @@ export const authApi = {
         .select()
         .single();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        if (profileError.code === '23505') {
+          throw new Error('Phone number or email already registered');
+        }
+        throw profileError;
+      }
 
       return { success: true, token: authData.session?.access_token || '', user: profileData };
     } catch (error: any) {
-      throw new Error(error.message);
+      throw new Error(error.message || 'Registration failed');
     }
   },
 
@@ -218,6 +228,19 @@ export const authApi = {
 // ─── Rides ───────────────────────────────────────────────────
 
 export const ridesApi = {
+  get: (rideId: string) => {
+    // Get ride from Supabase
+    return supabase
+      .from('rides')
+      .select('*')
+      .eq('id', rideId)
+      .single()
+      .then(({ data, error }) => {
+        if (error) throw error;
+        return { success: true, data };
+      });
+  },
+
   create: (body: {
     pickupAddress: string;
     pickupLatitude: number;
@@ -226,99 +249,21 @@ export const ridesApi = {
     dropoffLatitude: number;
     dropoffLongitude: number;
     paymentMethod?: string;
-  }) => request<{ success: boolean; data: RideData }>("/rides", {
-    method: "POST",
-    body: JSON.stringify(body),
-  }),
-
-  get: (rideId: string) =>
-    request<{ success: boolean; data: RideData }>(`/rides/${rideId}`),
-
-  cancel: (rideId: string, reason?: string) =>
-    request<{ success: boolean; data: RideData }>(`/rides/${rideId}/cancel`, {
-      method: "PATCH",
-      body: JSON.stringify({ reason }),
-    }),
-
-  rate: (rideId: string, rating: number) =>
-    request<{ success: boolean; data: RideData }>(`/rides/${rideId}/rate`, {
-      method: "PATCH",
-      body: JSON.stringify({ rating }),
-    }),
-
-  accept: (rideId: string) =>
-    request<{ success: boolean; data: RideData }>(`/rides/${rideId}/accept`, {
-      method: "PATCH",
-    }),
-
-  arrived: (rideId: string) =>
-    request<{ success: boolean; data: RideData }>(`/rides/${rideId}/arrived`, {
-      method: "PATCH",
-    }),
-
-  start: (rideId: string) =>
-    request<{ success: boolean; data: RideData }>(`/rides/${rideId}/start`, {
-      method: "PATCH",
-    }),
-
-  complete: (rideId: string) =>
-    request<{ success: boolean; data: RideData }>(`/rides/${rideId}/complete`, {
-      method: "PATCH",
-    }),
-};
-
-// ─── Drivers ─────────────────────────────────────────────────
-
-export const driversApi = {
-  updateStatus: (driverId: string, isOnline: boolean) =>
-    request(`/drivers/${driverId}/status`, {
-      method: "PATCH",
-      body: JSON.stringify({ isOnline }),
-    }),
-
-  updateLocation: (driverId: string, latitude: number, longitude: number, rideId?: string) =>
-    request(`/drivers/${driverId}/location`, {
-      method: "PATCH",
-      body: JSON.stringify({ latitude, longitude, rideId }),
-    }),
-
-  getEarnings: (driverId: string, period?: string) =>
-    request(`/drivers/${driverId}/earnings${period ? `?period=${period}` : ""}`),
-
-  getRides: (driverId: string) =>
-    request(`/drivers/${driverId}/rides`),
-};
-
-// ─── OTP ─────────────────────────────────────────────────────
-
-export const otpApi = {
-  send: (email: string, purpose = "signup") =>
-    request<{ success: boolean; message: string }>("/auth/send-otp", {
-      method: "POST",
-      body: JSON.stringify({ email, purpose }),
-    }),
-
-  verify: (email: string, otp: string, purpose = "signup") =>
-    request<{ success: boolean; message: string }>("/auth/verify-otp", {
-      method: "POST",
-      body: JSON.stringify({ email, otp, purpose }),
-    }),
-};
-
-// ─── Users ───────────────────────────────────────────────────
-
-export const usersApi = {
-  getRides: (userId: string) =>
-    request<{ success: boolean; data: RideData[] }>(`/users/${userId}/rides`),
-
-  getWallet: (userId: string) =>
-    request(`/users/${userId}/wallet`),
-
-  getNotifications: (userId: string) =>
-    request(`/users/${userId}/notifications`),
-
-  markNotificationsRead: (userId: string) =>
-    request(`/users/${userId}/notifications/read`, { method: "PATCH" }),
+    customerId?: string;
+  }) => {
+    // Create ride using customerRequestRide from socket service
+    return import('./socket').then(({ customerRequestRide }) => {
+      return customerRequestRide({
+        customerId: body.customerId || 'temp-id',
+        pickupLatitude: body.pickupLatitude,
+        pickupLongitude: body.pickupLongitude,
+        dropoffLatitude: body.dropoffLatitude,
+        dropoffLongitude: body.dropoffLongitude,
+        pickupAddress: body.pickupAddress,
+        dropoffAddress: body.dropoffAddress,
+      });
+    });
+  },
 };
 
 // ─── Types ───────────────────────────────────────────────────
