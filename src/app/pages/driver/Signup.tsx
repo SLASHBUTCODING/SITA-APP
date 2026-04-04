@@ -295,7 +295,7 @@ export function DriverSignup() {
             May account na?{" "}
             <button
               type="button"
-              onClick={() => navigate("/driver/home")}
+              onClick={() => navigate("/driver/login")}
               className="text-[#F47920] font-semibold"
             >
               Mag-Log In

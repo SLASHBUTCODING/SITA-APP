@@ -8,6 +8,7 @@ import { CustomerComplete } from "./pages/customer/RideComplete";
 import { CustomerProfile } from "./pages/customer/Profile";
 import { CustomerHistory } from "./pages/customer/History";
 import { CustomerSignup } from "./pages/customer/Signup";
+import { CustomerLogin } from "./pages/customer/Login";
 import { CustomerOTPVerification } from "./pages/customer/OTPVerification";
 import { CustomerWallet } from "./pages/customer/Wallet";
 import { CustomerNotifications } from "./pages/customer/Notifications";
@@ -19,6 +20,7 @@ import { DriverRideDone } from "./pages/driver/RideDone";
 import { DriverProfile } from "./pages/driver/Profile";
 import { DriverEarnings } from "./pages/driver/Earnings";
 import { DriverSignup } from "./pages/driver/Signup";
+import { DriverLogin } from "./pages/driver/Login";
 import { DriverOTPVerification } from "./pages/driver/OTPVerification";
 
 export const router = createBrowserRouter([
@@ -29,6 +31,7 @@ export const router = createBrowserRouter([
       { index: true, Component: Welcome },
       // Customer routes
       { path: "customer/signup", Component: CustomerSignup },
+      { path: "customer/login", Component: CustomerLogin },
       { path: "customer/otp", Component: CustomerOTPVerification },
       { path: "customer/home", Component: CustomerHome },
       { path: "customer/finding", Component: CustomerFinding },
@@ -41,6 +44,7 @@ export const router = createBrowserRouter([
       { path: "customer/promos", Component: CustomerPromos },
       // Driver routes
       { path: "driver/signup", Component: DriverSignup },
+      { path: "driver/login", Component: DriverLogin },
       { path: "driver/otp", Component: DriverOTPVerification },
       { path: "driver/home", Component: DriverHome },
       { path: "driver/request", Component: DriverRequest },

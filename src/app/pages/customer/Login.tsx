@@ -1,19 +1,16 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { motion } from "motion/react";
-import { ArrowLeft, User, Phone, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, User, Lock, Eye, EyeOff } from "lucide-react";
 import { authApi, saveAuth } from "../../services/api";
 
-export function CustomerSignup() {
+export function CustomerLogin() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
     phone: "",
-    email: "",
     password: "",
   });
 
@@ -22,11 +19,11 @@ export function CustomerSignup() {
     setError("");
     setLoading(true);
     try {
-      const res = await authApi.customerRegister(formData);
+      const res = await authApi.customerLogin(formData);
       saveAuth(res.token, res.user, "user");
-      navigate("/customer/otp");
+      navigate("/customer/home");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Registration failed");
+      setError(err instanceof Error ? err.message : "Login failed");
     } finally {
       setLoading(false);
     }
@@ -46,8 +43,8 @@ export function CustomerSignup() {
           <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-3">
             <span className="text-3xl">👤</span>
           </div>
-          <h1 className="text-white font-bold text-2xl mb-1">Sumali sa SITA</h1>
-          <p className="text-white/80 text-sm">Create your passenger account</p>
+          <h1 className="text-white font-bold text-2xl mb-1">Log in sa SITA</h1>
+          <p className="text-white/80 text-sm">Welcome back, Pasahero!</p>
         </div>
       </div>
 
@@ -59,41 +56,6 @@ export function CustomerSignup() {
               {error}
             </div>
           )}
-          {/* First Name */}
-          <div>
-            <label className="text-gray-700 text-sm font-semibold mb-2 block">
-              Pangalan <span className="text-[#F47920]">*</span>
-            </label>
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                required
-                placeholder="Juan"
-                value={formData.firstName}
-                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                className="w-full pl-11 pr-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F47920]/20 focus:border-[#F47920] text-gray-800"
-              />
-            </div>
-          </div>
-
-          {/* Last Name */}
-          <div>
-            <label className="text-gray-700 text-sm font-semibold mb-2 block">
-              Apelyido <span className="text-[#F47920]">*</span>
-            </label>
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                required
-                placeholder="Dela Cruz"
-                value={formData.lastName}
-                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                className="w-full pl-11 pr-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F47920]/20 focus:border-[#F47920] text-gray-800"
-              />
-            </div>
-          </div>
 
           {/* Phone */}
           <div>
@@ -101,31 +63,13 @@ export function CustomerSignup() {
               Mobile Number <span className="text-[#F47920]">*</span>
             </label>
             <div className="relative">
-              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="tel"
                 required
                 placeholder="+63 912 345 6789"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full pl-11 pr-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F47920]/20 focus:border-[#F47920] text-gray-800"
-              />
-            </div>
-          </div>
-
-          {/* Email */}
-          <div>
-            <label className="text-gray-700 text-sm font-semibold mb-2 block">
-              Email <span className="text-[#F47920]">*</span>
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="email"
-                required
-                placeholder="juan@example.com"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="w-full pl-11 pr-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F47920]/20 focus:border-[#F47920] text-gray-800"
               />
             </div>
@@ -156,19 +100,15 @@ export function CustomerSignup() {
             </div>
           </div>
 
-          {/* Terms */}
-          <div className="flex items-start gap-2 pt-2">
-            <input
-              type="checkbox"
-              required
-              id="terms"
-              className="mt-1 w-4 h-4 text-[#F47920] border-gray-300 rounded focus:ring-[#F47920]"
-            />
-            <label htmlFor="terms" className="text-xs text-gray-600 leading-relaxed">
-              Sumasang-ayon ako sa{" "}
-              <span className="text-[#F47920] font-semibold">Terms of Service</span> at{" "}
-              <span className="text-[#F47920] font-semibold">Privacy Policy</span> ng SITA
-            </label>
+          {/* Forgot Password */}
+          <div className="text-right">
+            <button
+              type="button"
+              onClick={() => navigate("/customer/forgot-password")}
+              className="text-sm text-[#F47920] font-medium"
+            >
+              Nakalimot ang password?
+            </button>
           </div>
 
           {/* Submit Button */}
@@ -178,18 +118,18 @@ export function CustomerSignup() {
             disabled={loading}
             className="w-full bg-[#F47920] text-white font-bold py-4 rounded-xl shadow-lg shadow-orange-900/20 mt-6 disabled:opacity-60"
           >
-            {loading ? "Nagre-register..." : "Mag-Sign Up"}
+            {loading ? "Nag-log in..." : "Mag-Log In"}
           </motion.button>
 
-          {/* Login Link */}
+          {/* Signup Link */}
           <p className="text-center text-sm text-gray-600 mt-4">
-            May account na?{" "}
+          Wala pang account?{" "}
             <button
               type="button"
-              onClick={() => navigate("/customer/login")}
+              onClick={() => navigate("/customer/signup")}
               className="text-[#F47920] font-semibold"
             >
-              Mag-Log In
+              Mag-Sign Up
             </button>
           </p>
         </form>
