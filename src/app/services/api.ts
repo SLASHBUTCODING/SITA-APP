@@ -98,7 +98,7 @@ export const authApi = {
         .from('users')
         .select('id')
         .eq('id', authData.user.id)
-        .single();
+        .maybeSingle();
 
       let profileData;
       if (existingProfile) {
@@ -107,7 +107,7 @@ export const authApi = {
           .from('users')
           .select('*')
           .eq('id', authData.user.id)
-          .single();
+          .maybeSingle();
         profileData = fetchedProfile;
       } else {
         // Create user profile
@@ -285,11 +285,12 @@ export const authApi = {
       });
 
       if (attempt1.error) {
+        // Fallback: look up real email from DB
         const { data: driverData, error: driverError } = await supabase
           .from('drivers')
           .select('email')
           .eq('phone', body.phone)
-          .single();
+          .maybeSingle();
 
         if (driverError || !driverData?.email) {
           throw new Error('Driver not found. Please sign up first.');
@@ -316,7 +317,7 @@ export const authApi = {
         .from('drivers')
         .select('*')
         .eq('phone', body.phone)
-        .single();
+        .maybeSingle();
 
       const driver = profile || authData.user;
 
