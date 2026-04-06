@@ -136,7 +136,7 @@ export function watchRideStatus(
             .from('drivers')
             .select('current_latitude, current_longitude')
             .eq('id', ride.driver_id)
-            .single();
+            .maybeSingle();
 
           onUpdate(ride.status, driver?.current_latitude, driver?.current_longitude);
         } else {

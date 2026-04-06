@@ -122,7 +122,7 @@ export const authApi = {
             password_hash: 'handled_by_supabase_auth'
           }])
           .select()
-          .single();
+          .maybeSingle();
 
         if (profileError) {
           if (profileError.code === '23505') {
@@ -253,7 +253,7 @@ export const authApi = {
           verification_status: 'pending'
         }])
         .select()
-        .single();
+        .maybeSingle();
 
       if (profileError) throw profileError;
 
@@ -358,7 +358,7 @@ export const authApi = {
         .from(table)
         .select('*')
         .eq('id', user?.id)
-        .single();
+        .maybeSingle();
 
       if (profileError || !profileData) throw new Error('User not found');
 

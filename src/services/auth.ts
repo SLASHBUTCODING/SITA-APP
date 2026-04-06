@@ -38,7 +38,7 @@ export const registerCustomer = async (userData: {
         password_hash: 'handled_by_supabase_auth'
       }])
       .select()
-      .single()
+      .maybeSingle()
 
     if (profileError) throw profileError
 
@@ -59,7 +59,7 @@ export const loginCustomer = async (credentials: {
       .from('users')
       .select('email')
       .eq('phone', credentials.phone)
-      .single()
+      .maybeSingle()
 
     if (userError || !userData) {
       throw new Error('User not found')
@@ -90,7 +90,7 @@ export const getCurrentUser = async () => {
       .from('users')
       .select('*')
       .eq('id', user?.id)
-      .single()
+      .maybeSingle()
 
     if (profileError) throw profileError
 
