@@ -128,8 +128,10 @@ export function SITAMap({
     const map = L.map(mapContainerRef.current, {
       center: defaultCenter,
       zoom,
-      zoomControl: true,
+      zoomControl: false,
       attributionControl: false,
+      touchZoom: true,
+      scrollWheelZoom: false,
     });
 
     // OpenStreetMap tiles (100% free)
