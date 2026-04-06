@@ -123,40 +123,42 @@ export function CustomerHome() {
 
   return (
     <div className="relative h-full w-full flex flex-col bg-white overflow-hidden">
-      {/* Map */}
-      <div className="absolute inset-0">
+      {/* Map Container - Fixed 45% height */}
+      <div className="relative h-[45vh] flex-shrink-0">
         <SITAMap
           customerLocation={currentCoords ? [currentCoords.lat, currentCoords.lng] : undefined}
           nearbyDrivers={nearbyDrivers}
           className="w-full h-full"
         />
+        
+        {/* Top Header - Overlaid on map */}
+        <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 pt-12 pb-3">
+          <div>
+            <p className="text-xs text-gray-600 font-medium">Magandang umaga 👋</p>
+            <h1 className="text-gray-900 font-bold text-lg">{displayName}</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <button className="relative w-9 h-9 bg-white rounded-full shadow-md flex items-center justify-center">
+              <Bell className="w-4 h-4 text-gray-700" />
+              <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-[#F47920] rounded-full border border-white" />
+            </button>
+            <img src={CUSTOMER_IMAGE} alt="Profile" className="w-9 h-9 rounded-full object-cover border-2 border-[#F47920] shadow-md" />
+          </div>
+        </div>
+
+        {/* Nearby drivers badge - Overlaid on map */}
+        <div className="absolute bottom-3 left-4 right-4">
+          <div className="bg-white/90 backdrop-blur-sm rounded-xl px-3 py-2 inline-flex items-center gap-2 shadow-sm">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+            <span className="text-xs text-gray-700 font-medium">{nearbyCount > 0 ? `${nearbyCount} tricycles nearby · ~3 min ETA` : "Naghahanap ng tricycle..."}</span>
+          </div>
+        </div>
       </div>
 
-      {/* Top Header */}
-      <div className="relative z-10 flex items-center justify-between px-4 pt-12 pb-3">
-        <div>
-          <p className="text-xs text-gray-600 font-medium">Magandang umaga 👋</p>
-          <h1 className="text-gray-900 font-bold text-lg">{displayName}</h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <button className="relative w-9 h-9 bg-white rounded-full shadow-md flex items-center justify-center">
-            <Bell className="w-4 h-4 text-gray-700" />
-            <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-[#F47920] rounded-full border border-white" />
-          </button>
-          <img src={CUSTOMER_IMAGE} alt="Profile" className="w-9 h-9 rounded-full object-cover border-2 border-[#F47920] shadow-md" />
-        </div>
-      </div>
+      {/* Content Area - Below map */}
+      <div className="flex-1 flex flex-col bg-white">
 
-      {/* Nearby drivers badge */}
-      <div className="relative z-10 mx-4 mb-3">
-        <div className="bg-white/90 backdrop-blur-sm rounded-xl px-3 py-2 inline-flex items-center gap-2 shadow-sm">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-          <span className="text-xs text-gray-700 font-medium">{nearbyCount > 0 ? `${nearbyCount} tricycles nearby · ~3 min ETA` : "Naghahanap ng tricycle..."}</span>
-        </div>
-      </div>
-
-      <div className="flex-1" />
-
+      {/* Bottom Booking Sheet */}
       {/* Bottom Booking Sheet */}
       <AnimatePresence>
         {!searchFocused ? (
@@ -298,6 +300,7 @@ export function CustomerHome() {
       </AnimatePresence>
 
       <CustomerNav />
+      </div>
     </div>
   );
 }
