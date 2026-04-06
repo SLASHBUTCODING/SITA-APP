@@ -58,8 +58,14 @@ export const authApi = {
     try {
       const emailToUse = body.email || `${body.phone}@sita.local`;
 
+      if (!body.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) {
+        throw new Error('Please enter a valid email address.');
+      }
       if (body.password.length < 6) {
         throw new Error('Password must be at least 6 characters.');
+      }
+      if (!body.phone || !/^09\d{9}$/.test(body.phone)) {
+        throw new Error('Please enter a valid Philippine mobile number (09XXXXXXXXX).');
       }
 
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -162,7 +168,7 @@ export const authApi = {
           .from('users')
           .select('email')
           .eq('phone', body.phone)
-          .single();
+          .maybeSingle();
 
         if (userError || !userData?.email) {
           throw new Error('User not found. Please sign up first.');
@@ -189,7 +195,7 @@ export const authApi = {
         .from('users')
         .select('*')
         .eq('phone', body.phone)
-        .single();
+        .maybeSingle();
 
       const user = profile || authData.user;
       localStorage.setItem('sita_user', JSON.stringify(user));
