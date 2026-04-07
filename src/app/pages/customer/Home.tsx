@@ -166,6 +166,7 @@ export function CustomerHome() {
   };
 
   const getCurrentLocation = () => {
+    console.log('Getting current GPS location...');
     if (!navigator.geolocation) {
       setBookError("Location not supported on this device.");
       return;
@@ -178,11 +179,19 @@ export function CustomerHome() {
           lat: position.coords.latitude,
           lng: position.coords.longitude
         };
+        console.log('GPS location obtained:', coords);
         setCurrentCoords(coords);
         setPickup("Current Location (GPS)");
         setLocationLoading(false);
+        
+        // Clear any previous destination when getting new location
+        setDropoff("");
+        setDestinationCoords(null);
+        setRouteCoords([]);
+        setEstimatedFare(0);
       },
       (error) => {
+        console.error('GPS error:', error);
         setLocationLoading(false);
         // iOS/Android compatible error codes: 1=denied, 2=unavailable, 3=timeout
         if (error.code === 1) {

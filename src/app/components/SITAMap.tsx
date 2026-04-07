@@ -122,8 +122,8 @@ export function SITAMap({
   const markersRef = useRef<{ [key: string]: L.Marker }>({});
   const routeRef = useRef<L.Polyline | null>(null);
 
-  // Default center: Philippines (Batangas area) - but prioritize user location
-  const defaultCenter: [number, number] = customerLocation || center || driverLocation || [13.7565, 121.0583];
+  // Default center: Use actual GPS location or Philippines center as last resort
+  const defaultCenter: [number, number] = customerLocation || center || driverLocation || [12.8797, 121.7740]; // Philippines center
 
   // Initialize map
   useEffect(() => {
