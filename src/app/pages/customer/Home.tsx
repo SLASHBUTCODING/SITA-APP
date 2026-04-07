@@ -166,7 +166,7 @@ export function CustomerHome() {
       </div>
 
       {/* Content Area - Below map */}
-      <div className="flex-1 flex flex-col bg-white overflow-y-auto pb-20">
+      <div className="flex-1 flex flex-col bg-white overflow-y-auto pb-16">
 
       {/* Bottom Booking Sheet */}
       {/* Bottom Booking Sheet */}
