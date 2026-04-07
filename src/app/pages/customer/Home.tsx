@@ -65,8 +65,13 @@ export function CustomerHome() {
   }, []);
 
   const handleDestinationSelect = (address: string, coords?: {lat: number, lng: number}) => {
-    if (activeField === "pickup") setPickup(address);
-    else setDropoff(address);
+    console.log('handleDestinationSelect called:', { address, coords, activeField });
+    
+    if (activeField === "pickup") {
+      setPickup(address);
+    } else {
+      setDropoff(address);
+    }
     
     if (coords) {
       setDestinationCoords(coords);
@@ -79,13 +84,18 @@ export function CustomerHome() {
         );
         const fare = calculateFare(distance);
         setEstimatedFare(fare);
+        console.log('Distance calculated:', distance, 'Fare:', fare);
         
         // Create simple route (straight line for now)
         setRouteCoords([
           [currentCoords.lat, currentCoords.lng],
           [coords.lat, coords.lng]
         ]);
+      } else {
+        console.log('No current coords for distance calculation');
       }
+    } else {
+      console.log('No coordinates provided for destination');
     }
     
     setSearchFocused(false);
@@ -278,11 +288,14 @@ export function CustomerHome() {
 
                   {/* Pickup */}
                   <div
-                    className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5 mb-2 cursor-pointer"
+                    className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5 mb-2 cursor-pointer hover:bg-gray-100 transition-colors"
                     onClick={() => { 
+                      console.log('Pickup field clicked, current pickup:', pickup);
                       if (pickup === "Current Location") {
+                        console.log('Getting current location...');
                         getCurrentLocation();
                       } else {
+                        console.log('Setting pickup field active...');
                         setActiveField("pickup"); 
                         setSearchFocused(true); 
                       }
@@ -297,15 +310,26 @@ export function CustomerHome() {
 
                   {/* Dropoff */}
                   <div
-                    className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5 mb-4 cursor-pointer"
-                    onClick={() => { setActiveField("dropoff"); setSearchFocused(true); }}
+                    className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5 mb-4 cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => { 
+                      console.log('Dropoff field clicked');
+                      setActiveField("dropoff"); 
+                      setSearchFocused(true); 
+                    }}
                   >
                     <MapPin className="w-3.5 h-3.5 text-[#F47920]" />
                     <span className={`flex-1 text-sm truncate ${dropoff ? "text-gray-700" : "text-gray-400"}`}>
                       {dropoff || "Saan pupunta?"}
                     </span>
                     {dropoff && (
-                      <button onClick={(e) => { e.stopPropagation(); setDropoff(""); }}>
+                      <button onClick={(e) => { 
+                        e.stopPropagation(); 
+                        console.log('Clearing dropoff');
+                        setDropoff(""); 
+                        setDestinationCoords(null);
+                        setRouteCoords([]);
+                        setEstimatedFare(0);
+                      }}>
                         <X className="w-3.5 h-3.5 text-gray-400" />
                       </button>
                     )}
@@ -316,7 +340,13 @@ export function CustomerHome() {
                     {QUICK_DESTINATIONS.map((dest) => (
                       <button
                         key={dest.label}
-                        onClick={() => { setActiveField("dropoff"); handleDestinationSelect(dest.address); }}
+                        onClick={() => { 
+                          console.log('Quick destination clicked:', dest.label, dest.address);
+                          setActiveField("dropoff"); 
+                          // For now, just set address without coordinates
+                          // In a real app, you'd geocode these addresses
+                          handleDestinationSelect(dest.address); 
+                        }}
                         className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2 text-left hover:bg-orange-50 transition-colors border border-gray-100"
                       >
                         <span className="text-base">{dest.icon}</span>
