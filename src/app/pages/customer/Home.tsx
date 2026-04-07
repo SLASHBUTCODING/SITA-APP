@@ -298,7 +298,8 @@ export function CustomerHome() {
                   {/* Pickup */}
                   <div
                     className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5 mb-2 cursor-pointer hover:bg-gray-100 transition-colors"
-                    onClick={() => { 
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
                       console.log('Pickup field clicked, current pickup:', pickup);
                       if (pickup === "Current Location") {
                         console.log('Getting current location...');
@@ -320,7 +321,8 @@ export function CustomerHome() {
                   {/* Dropoff */}
                   <div
                     className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5 mb-4 cursor-pointer hover:bg-gray-100 transition-colors"
-                    onClick={() => { 
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
                       console.log('Dropoff field clicked');
                       setActiveField("dropoff"); 
                       setSearchFocused(true); 
@@ -349,7 +351,8 @@ export function CustomerHome() {
                     {QUICK_DESTINATIONS.map((dest) => (
                       <button
                         key={dest.label}
-                        onClick={() => { 
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
                           console.log('Quick destination clicked:', dest.label, dest.address);
                           setActiveField("dropoff"); 
                           // For now, just set address without coordinates
