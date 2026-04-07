@@ -122,7 +122,7 @@ export function CustomerHome() {
   };
 
   return (
-    <div className="relative h-full w-full flex flex-col bg-white overflow-hidden">
+    <div className="relative h-screen w-full flex flex-col bg-white overflow-hidden">
       {/* Map Container - Fixed 45% height */}
       <div className="relative h-[45vh] flex-shrink-0">
         <SITAMap
@@ -156,7 +156,7 @@ export function CustomerHome() {
       </div>
 
       {/* Content Area - Below map */}
-      <div className="flex-1 flex flex-col bg-white">
+      <div className="flex-1 flex flex-col bg-white overflow-y-auto">
 
       {/* Bottom Booking Sheet */}
       {/* Bottom Booking Sheet */}
