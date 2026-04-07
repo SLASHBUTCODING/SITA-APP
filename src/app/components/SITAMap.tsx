@@ -103,7 +103,7 @@ export interface MapProps {
 
 export function SITAMap({
   center,
-  zoom = 15,
+  zoom = 17,
   customerLocation,
   driverLocation,
   pickupLocation,
@@ -118,8 +118,8 @@ export function SITAMap({
   const markersRef = useRef<{ [key: string]: L.Marker }>({});
   const routeRef = useRef<L.Polyline | null>(null);
 
-  // Default center: Philippines (Batangas area)
-  const defaultCenter: [number, number] = center || customerLocation || driverLocation || [13.7565, 121.0583];
+  // Default center: Philippines (Batangas area) - but prioritize user location
+  const defaultCenter: [number, number] = customerLocation || center || driverLocation || [13.7565, 121.0583];
 
   // Initialize map
   useEffect(() => {

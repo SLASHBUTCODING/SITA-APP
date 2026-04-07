@@ -137,7 +137,7 @@ export function CustomerHome() {
         <SITAMap
           customerLocation={currentCoords ? [currentCoords.lat, currentCoords.lng] : undefined}
           nearbyDrivers={nearbyDrivers}
-          zoom={16}
+          zoom={17}
           className="w-full h-full"
         />
         
@@ -166,7 +166,7 @@ export function CustomerHome() {
       </div>
 
       {/* Content Area - Below map */}
-      <div className="flex-1 flex flex-col bg-white overflow-y-auto pb-16">
+      <div className="flex-1 flex flex-col bg-white overflow-y-auto pb-20">
 
       {/* Bottom Booking Sheet */}
       {/* Bottom Booking Sheet */}
@@ -180,7 +180,7 @@ export function CustomerHome() {
             className="relative z-10 bg-white rounded-t-3xl shadow-2xl px-4 pt-4"
           >
             <div 
-              className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-3 cursor-pointer"
+              className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-3 cursor-pointer"
               onClick={() => setIsPanelMinimized(!isPanelMinimized)}
             />
             {!isPanelMinimized && (

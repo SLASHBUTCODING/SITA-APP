@@ -13,7 +13,7 @@ export function CustomerNav() {
   const location = useLocation();
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex items-center justify-around px-2 pb-4 pt-2 z-20">
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex items-center justify-around px-2 pb-4 pt-2 z-50">
       {navItems.map(({ icon: Icon, label, path }) => {
         const active = location.pathname === path;
         return (
