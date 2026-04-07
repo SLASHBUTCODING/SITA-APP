@@ -58,8 +58,8 @@ export function CustomerHome() {
       setNearbyCount(drivers.length);
     });
     
-    // Get current location on mount
-    getCurrentLocation();
+    // Don't get location automatically - wait for user to click
+    // getCurrentLocation();
     
     return cleanup;
   }, []);
@@ -189,6 +189,9 @@ export function CustomerHome() {
         setDestinationCoords(null);
         setRouteCoords([]);
         setEstimatedFare(0);
+        
+        // DO NOT open search modal when getting GPS
+        setSearchFocused(false);
       },
       (error) => {
         console.error('GPS error:', error);
@@ -301,7 +304,7 @@ export function CustomerHome() {
                     onClick={(e) => { 
                       e.stopPropagation(); 
                       console.log('Pickup field clicked, current pickup:', pickup);
-                      if (pickup === "Current Location") {
+                      if (pickup === "Current Location" || pickup === "Current Location (GPS)") {
                         console.log('Getting current location...');
                         getCurrentLocation();
                       } else {
