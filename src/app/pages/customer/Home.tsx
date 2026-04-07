@@ -42,6 +42,11 @@ export function CustomerHome() {
   const [bookError, setBookError] = useState("");
   const [isPanelMinimized, setIsPanelMinimized] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Array<{display_name: string; lat: string; lon: string}>>([]);
+  const [destinationCoords, setDestinationCoords] = useState<{lat: number, lng: number} | null>(null);
+  const [routeCoords, setRouteCoords] = useState<Array<[number, number]>>([]);
+  const [estimatedFare, setEstimatedFare] = useState(0);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   const user = getStoredUser<UserData>();
   const displayName = user ? `${user.first_name} ${user.last_name}` : "Pasahero";
@@ -59,17 +64,95 @@ export function CustomerHome() {
     return cleanup;
   }, []);
 
-  const handleDestinationSelect = (address: string) => {
+  const handleDestinationSelect = (address: string, coords?: {lat: number, lng: number}) => {
     if (activeField === "pickup") setPickup(address);
     else setDropoff(address);
+    
+    if (coords) {
+      setDestinationCoords(coords);
+      
+      // Calculate distance and fare if we have current location
+      if (currentCoords) {
+        const distance = calculateDistance(
+          currentCoords.lat, currentCoords.lng,
+          coords.lat, coords.lng
+        );
+        const fare = calculateFare(distance);
+        setEstimatedFare(fare);
+        
+        // Create simple route (straight line for now)
+        setRouteCoords([
+          [currentCoords.lat, currentCoords.lng],
+          [coords.lat, coords.lng]
+        ]);
+      }
+    }
+    
     setSearchFocused(false);
     setSearchQuery("");
+    setSearchResults([]);
+  };
+
+  const handleSearchResultSelect = (result: {display_name: string; lat: string; lon: string}) => {
+    const coords = {
+      lat: parseFloat(result.lat),
+      lng: parseFloat(result.lon)
+    };
+    handleDestinationSelect(result.display_name, coords);
+  };
+
+  const handlePresetSelect = (label: string, address: string) => {
+    // For presets, we can use approximate coordinates or geocode them
+    // For now, just set the address
+    handleDestinationSelect(address);
   };
 
   const handleSearchSubmit = () => {
     if (searchQuery.trim()) {
-      handleDestinationSelect(searchQuery.trim());
+      searchLocations(searchQuery.trim());
     }
+  };
+
+  // Search locations using Nominatim API
+  const searchLocations = async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setSearchLoading(true);
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&countrycodes=ph&limit=5`
+      );
+      const data = await response.json();
+      setSearchResults(data);
+    } catch (error) {
+      console.error('Search error:', error);
+      setSearchResults([]);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  // Calculate distance using Haversine formula
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c; // Distance in kilometers
+  };
+
+  // Calculate estimated fare based on distance
+  const calculateFare = (distanceKm: number) => {
+    const baseFare = 40; // Base fare in PHP
+    const perKmRate = 15; // Rate per kilometer
+    return Math.round(baseFare + (distanceKm * perKmRate));
   };
 
   const getCurrentLocation = () => {
@@ -137,6 +220,8 @@ export function CustomerHome() {
         <SITAMap
           customerLocation={currentCoords ? [currentCoords.lat, currentCoords.lng] : undefined}
           nearbyDrivers={nearbyDrivers}
+          destinationLocation={destinationCoords ? [destinationCoords.lat, destinationCoords.lng] : undefined}
+          routeCoordinates={routeCoords}
           zoom={17}
           className="w-full h-full"
         />
@@ -242,6 +327,16 @@ export function CustomerHome() {
                     ))}
                   </div>
 
+                  {/* Estimated Fare */}
+                  {estimatedFare > 0 && (
+                    <div className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-3 mb-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Estimated fare:</span>
+                        <span className="text-lg font-bold text-[#F47920]">₱{estimatedFare}</span>
+                      </div>
+                    </div>
+                  )}
+
                   {bookError && (
                     <p className="text-red-500 text-xs text-center mb-2">{bookError}</p>
                   )}
@@ -276,7 +371,10 @@ export function CustomerHome() {
                   <input
                     autoFocus
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      searchLocations(e.target.value);
+                    }}
                     onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit()}
                     placeholder={activeField === "pickup" ? "Pickup location..." : "Search destination..."}
                     className="flex-1 text-sm bg-transparent outline-none text-gray-700 placeholder-gray-400"
@@ -285,33 +383,67 @@ export function CustomerHome() {
               </div>
 
               <div className="px-4 pt-4 flex-1 overflow-auto">
-                <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-3">Recent</p>
-                {RECENT.map((r, i) => (
-                  <button key={i} onClick={() => handleDestinationSelect(r.place)} className="w-full flex items-center gap-3 py-3 border-b border-gray-50">
-                    <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                      <Clock className="w-4 h-4 text-gray-400" />
-                    </div>
-                    <div className="text-left">
-                      <p className="text-sm font-semibold text-gray-800">{r.place}</p>
-                      <p className="text-xs text-gray-400">{r.address}</p>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-gray-300 ml-auto" />
-                  </button>
-                ))}
+                {/* Search Results */}
+                {searchLoading && (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#F47920]"></div>
+                  </div>
+                )}
+                
+                {searchResults.length > 0 && (
+                  <>
+                    <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-3">Search Results</p>
+                    {searchResults.map((result, index) => (
+                      <button 
+                        key={index} 
+                        onClick={() => handleSearchResultSelect(result)} 
+                        className="w-full flex items-center gap-3 py-3 border-b border-gray-50"
+                      >
+                        <div className="w-9 h-9 rounded-full bg-orange-50 flex items-center justify-center flex-shrink-0">
+                          <MapPin className="w-4 h-4 text-[#F47920]" />
+                        </div>
+                        <div className="text-left flex-1">
+                          <p className="text-sm font-semibold text-gray-800">{result.display_name.split(',')[0]}</p>
+                          <p className="text-xs text-gray-400">{result.display_name.split(',').slice(1).join(',').trim()}</p>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-gray-300" />
+                      </button>
+                    ))}
+                  </>
+                )}
 
-                <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mt-4 mb-3">Mga Lugar</p>
-                {QUICK_DESTINATIONS.map((d) => (
-                  <button key={d.label} onClick={() => handleDestinationSelect(d.address)} className="w-full flex items-center gap-3 py-3 border-b border-gray-50">
-                    <div className="w-9 h-9 rounded-full bg-orange-50 flex items-center justify-center flex-shrink-0">
-                      <span className="text-lg">{d.icon}</span>
-                    </div>
-                    <div className="text-left">
-                      <p className="text-sm font-semibold text-gray-800">{d.label}</p>
-                      <p className="text-xs text-gray-400">{d.address}</p>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-gray-300 ml-auto" />
-                  </button>
-                ))}
+                {/* Recent */}
+                {!searchLoading && searchResults.length === 0 && (
+                  <>
+                    <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-3">Recent</p>
+                    {RECENT.map((r, i) => (
+                      <button key={i} onClick={() => handleDestinationSelect(r.place)} className="w-full flex items-center gap-3 py-3 border-b border-gray-50">
+                        <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                          <Clock className="w-4 h-4 text-gray-400" />
+                        </div>
+                        <div className="text-left">
+                          <p className="text-sm font-semibold text-gray-800">{r.place}</p>
+                          <p className="text-xs text-gray-400">{r.address}</p>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-gray-300 ml-auto" />
+                      </button>
+                    ))}
+
+                    <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mt-4 mb-3">Mga Lugar</p>
+                    {QUICK_DESTINATIONS.map((d) => (
+                      <button key={d.label} onClick={() => handleDestinationSelect(d.address)} className="w-full flex items-center gap-3 py-3 border-b border-gray-50">
+                        <div className="w-9 h-9 rounded-full bg-orange-50 flex items-center justify-center flex-shrink-0">
+                          <span className="text-lg">{d.icon}</span>
+                        </div>
+                        <div className="text-left">
+                          <p className="text-sm font-semibold text-gray-800">{d.label}</p>
+                          <p className="text-xs text-gray-400">{d.address}</p>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-gray-300 ml-auto" />
+                      </button>
+                    ))}
+                  </>
+                )}
               </div>
             </motion.div>
           )}

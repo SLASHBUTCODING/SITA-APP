@@ -95,6 +95,8 @@ export interface MapProps {
   driverLocation?: [number, number];
   pickupLocation?: [number, number];
   dropoffLocation?: [number, number];
+  destinationLocation?: [number, number];
+  routeCoordinates?: Array<[number, number]>;
   nearbyDrivers?: DriverMarker[];
   showRoute?: boolean;
   className?: string;
@@ -108,6 +110,8 @@ export function SITAMap({
   driverLocation,
   pickupLocation,
   dropoffLocation,
+  destinationLocation,
+  routeCoordinates,
   nearbyDrivers = [],
   showRoute = false,
   className = "",
@@ -197,21 +201,52 @@ export function SITAMap({
     }
   }, [driverLocation]);
 
-  // Update pickup marker
+  // Update destination marker
   useEffect(() => {
     if (!mapRef.current) return;
     const map = mapRef.current;
 
-    if (pickupLocation) {
-      if (markersRef.current["pickup"]) {
-        markersRef.current["pickup"].setLatLng(pickupLocation);
+    if (destinationLocation) {
+      if (markersRef.current["destination"]) {
+        markersRef.current["destination"].setLatLng(destinationLocation);
       } else {
-        markersRef.current["pickup"] = L.marker(pickupLocation, { icon: pickupIcon })
+        markersRef.current["destination"] = L.marker(destinationLocation, { icon: pickupIcon })
           .addTo(map)
-          .bindPopup("🟢 Pickup");
+          .bindPopup("🎯 Destination");
+      }
+    } else {
+      if (markersRef.current["destination"]) {
+        markersRef.current["destination"].remove();
+        delete markersRef.current["destination"];
       }
     }
-  }, [pickupLocation]);
+  }, [destinationLocation]);
+
+  // Update route line
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const map = mapRef.current;
+
+    // Remove existing route
+    if (routeRef.current) {
+      routeRef.current.remove();
+      routeRef.current = null;
+    }
+
+    // Add new route if coordinates provided
+    if (routeCoordinates && routeCoordinates.length >= 2) {
+      routeRef.current = L.polyline(routeCoordinates, {
+        color: "#F47920",
+        weight: 4,
+        opacity: 0.7,
+        dashArray: "10, 5"
+      }).addTo(map);
+
+      // Fit map to show route
+      const bounds = L.latLngBounds(routeCoordinates);
+      map.fitBounds(bounds, { padding: [50, 50] });
+    }
+  }, [routeCoordinates]);
 
   // Update dropoff marker
   useEffect(() => {
