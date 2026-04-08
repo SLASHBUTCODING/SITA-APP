@@ -459,7 +459,7 @@ export function CustomerHome() {
                 )}
 
                 {/* Empty state - encourage typing first */}
-                {!searchLoading && searchResults.length === 0 && (
+                {!searchLoading && searchResults.length === 0 && searchQuery.trim() === "" && (
                   <div className="flex flex-col items-center justify-center py-8">
                     <Search className="w-8 h-8 text-gray-300 mb-2" />
                     <p className="text-sm text-gray-400 text-center">Start typing to search for a destination</p>

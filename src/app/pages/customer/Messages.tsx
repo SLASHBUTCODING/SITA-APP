@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ArrowLeft, Search, Phone, MoreVertical } from "lucide-react";
+import { CustomerNav } from "../../components/CustomerNav";
 
 export function CustomerMessages() {
   const [selectedChat, setSelectedChat] = useState<number | null>(null);
@@ -100,12 +101,17 @@ export function CustomerMessages() {
             </button>
           </div>
         </div>
+        
+        {/* Bottom Nav */}
+        <div className="absolute bottom-0 left-0 right-0">
+          <CustomerNav />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full bg-gray-50">
+    <div className="flex flex-col h-full bg-gray-50 relative">
       {/* Header */}
       <div className="bg-white border-b border-gray-100 px-4 py-3">
         <h2 className="text-lg font-bold text-gray-800">Messages</h2>
