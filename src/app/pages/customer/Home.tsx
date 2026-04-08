@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import ReactDOM from "react-dom";
 import { useNavigate } from "react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, MapPin, ChevronRight, Bell, Navigation, Clock, X } from "lucide-react";
@@ -274,9 +273,9 @@ export function CustomerHome() {
         </div>
       </div>
 
-      {/* Search Modal - portal into phone-frame so absolute inset-0 works correctly */}
-      {searchFocused && ReactDOM.createPortal(
-        <AnimatePresence>
+      {/* Search Modal - absolute inset-0 inside CustomerHome root div */}
+      <AnimatePresence>
+        {searchFocused && (
           <motion.div
             key="search"
             initial={{ y: "100%" }}
@@ -352,9 +351,8 @@ export function CustomerHome() {
               )}
             </div>
           </motion.div>
-        </AnimatePresence>,
-        document.getElementById("phone-frame") || document.body
-      )}
+        )}
+      </AnimatePresence>
 
       {/* Booking Panel */}
       <div className="flex-1 overflow-y-auto pb-16">
