@@ -273,11 +273,92 @@ export function CustomerHome() {
         </div>
       </div>
 
+      {/* Search Modal - covers full screen when focused */}
+      <AnimatePresence>
+        {searchFocused && (
+          <motion.div
+            key="search"
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            className="absolute inset-0 z-30 bg-white flex flex-col"
+          >
+            <div className="pt-12 px-4 pb-3 border-b border-gray-100">
+              <div className="flex items-center gap-3 mb-3">
+                <button onClick={() => { setSearchFocused(false); setSearchQuery(""); setSearchResults([]); }} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100">
+                  <X className="w-4 h-4 text-gray-600" />
+                </button>
+                <h2 className="font-bold text-gray-800">{activeField === "pickup" ? "Set Pickup" : "Piliin ang Destinasyon"}</h2>
+              </div>
+              <div className="flex items-center gap-3 bg-gray-50 border border-[#F47920] rounded-xl px-3 py-2.5">
+                <Search className="w-4 h-4 text-gray-400" />
+                <input
+                  autoFocus
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    searchLocations(e.target.value);
+                  }}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit()}
+                  placeholder={activeField === "pickup" ? "Pickup location..." : "Search destination..."}
+                  className="flex-1 text-sm bg-transparent outline-none text-gray-700 placeholder-gray-400"
+                />
+              </div>
+            </div>
+
+            <div className="px-4 pt-4 flex-1 overflow-auto">
+              {searchLoading && (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#F47920]"></div>
+                </div>
+              )}
+
+              {searchResults.length > 0 && (
+                <>
+                  <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-3">Search Results</p>
+                  {searchResults.map((result, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleSearchResultSelect(result)}
+                      className="w-full flex items-center gap-3 py-3 border-b border-gray-50"
+                    >
+                      <div className="w-9 h-9 rounded-full bg-orange-50 flex items-center justify-center flex-shrink-0">
+                        <MapPin className="w-4 h-4 text-[#F47920]" />
+                      </div>
+                      <div className="text-left flex-1">
+                        <p className="text-sm font-semibold text-gray-800">{result.display_name.split(',')[0]}</p>
+                        <p className="text-xs text-gray-400">{result.display_name.split(',').slice(1).join(',').trim()}</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-gray-300" />
+                    </button>
+                  ))}
+                </>
+              )}
+
+              {!searchLoading && searchResults.length === 0 && searchQuery.trim() === "" && (
+                <div className="flex flex-col items-center justify-center py-8">
+                  <Search className="w-8 h-8 text-gray-300 mb-2" />
+                  <p className="text-sm text-gray-400 text-center">Start typing to search for a destination</p>
+                  <p className="text-xs text-gray-300 text-center mt-1">You can type any address or place name</p>
+                </div>
+              )}
+
+              {!searchLoading && searchResults.length === 0 && searchQuery.trim() !== "" && (
+                <div className="flex flex-col items-center justify-center py-8">
+                  <p className="text-sm text-gray-400 text-center">No results found for "{searchQuery}"</p>
+                  <p className="text-xs text-gray-300 text-center mt-1">Try a different search term</p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Booking Panel */}
       <div className="flex-1 overflow-y-auto pb-16">
         {/* Bottom Booking Sheet */}
         <AnimatePresence>
-          {!searchFocused ? (
+          {!searchFocused && (
             <motion.div
               key="collapsed"
               initial={{ y: 100 }}
@@ -396,110 +477,6 @@ export function CustomerHome() {
                   </motion.button>
                 </>
               )}
-            </motion.div>
-          ) : (
-            <motion.div
-              key="search"
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              className="absolute inset-0 z-20 bg-white flex flex-col"
-            >
-              <div className="pt-12 px-4 pb-3 border-b border-gray-100">
-                <div className="flex items-center gap-3 mb-3">
-                  <button onClick={() => setSearchFocused(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100">
-                    <X className="w-4 h-4 text-gray-600" />
-                  </button>
-                  <h2 className="font-bold text-gray-800">{activeField === "pickup" ? "Set Pickup" : "Piliin ang Destinasyon"}</h2>
-                </div>
-                <div className="flex items-center gap-3 bg-gray-50 border border-[#F47920] rounded-xl px-3 py-2.5">
-                  <Search className="w-4 h-4 text-gray-400" />
-                  <input
-                    autoFocus
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      searchLocations(e.target.value);
-                    }}
-                    onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit()}
-                    placeholder={activeField === "pickup" ? "Pickup location..." : "Search destination..."}
-                    className="flex-1 text-sm bg-transparent outline-none text-gray-700 placeholder-gray-400"
-                  />
-                </div>
-              </div>
-
-              <div className="px-4 pt-4 flex-1 overflow-auto">
-                {/* Search Results */}
-                {searchLoading && (
-                  <div className="flex items-center justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#F47920]"></div>
-                  </div>
-                )}
-                
-                {searchResults.length > 0 && (
-                  <>
-                    <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-3">Search Results</p>
-                    {searchResults.map((result, index) => (
-                      <button 
-                        key={index} 
-                        onClick={() => handleSearchResultSelect(result)} 
-                        className="w-full flex items-center gap-3 py-3 border-b border-gray-50"
-                      >
-                        <div className="w-9 h-9 rounded-full bg-orange-50 flex items-center justify-center flex-shrink-0">
-                          <MapPin className="w-4 h-4 text-[#F47920]" />
-                        </div>
-                        <div className="text-left flex-1">
-                          <p className="text-sm font-semibold text-gray-800">{result.display_name.split(',')[0]}</p>
-                          <p className="text-xs text-gray-400">{result.display_name.split(',').slice(1).join(',').trim()}</p>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-gray-300" />
-                      </button>
-                    ))}
-                  </>
-                )}
-
-                {/* Empty state - encourage typing first */}
-                {!searchLoading && searchResults.length === 0 && searchQuery.trim() === "" && (
-                  <div className="flex flex-col items-center justify-center py-8">
-                    <Search className="w-8 h-8 text-gray-300 mb-2" />
-                    <p className="text-sm text-gray-400 text-center">Start typing to search for a destination</p>
-                    <p className="text-xs text-gray-300 text-center mt-1">You can type any address or place name</p>
-                  </div>
-                )}
-
-                {/* Show presets only after user has typed and cleared search */}
-                {!searchLoading && searchResults.length === 0 && searchQuery.trim() !== "" && (
-                  <>
-                    <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-3">Recent</p>
-                    {RECENT.map((r, i) => (
-                      <button key={i} onClick={() => handleDestinationSelect(r.place)} className="w-full flex items-center gap-3 py-3 border-b border-gray-50">
-                        <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                          <Clock className="w-4 h-4 text-gray-400" />
-                        </div>
-                        <div className="text-left">
-                          <p className="text-sm font-semibold text-gray-800">{r.place}</p>
-                          <p className="text-xs text-gray-400">{r.address}</p>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-gray-300 ml-auto" />
-                      </button>
-                    ))}
-
-                    <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mt-4 mb-3">Mga Lugar</p>
-                    {QUICK_DESTINATIONS.map((d) => (
-                      <button key={d.label} onClick={() => handleDestinationSelect(d.address)} className="w-full flex items-center gap-3 py-3 border-b border-gray-50">
-                        <div className="w-9 h-9 rounded-full bg-orange-50 flex items-center justify-center flex-shrink-0">
-                          <span className="text-lg">{d.icon}</span>
-                        </div>
-                        <div className="text-left">
-                          <p className="text-sm font-semibold text-gray-800">{d.label}</p>
-                          <p className="text-xs text-gray-400">{d.address}</p>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-gray-300 ml-auto" />
-                      </button>
-                    ))}
-                  </>
-                )}
-              </div>
             </motion.div>
           )}
         </AnimatePresence>

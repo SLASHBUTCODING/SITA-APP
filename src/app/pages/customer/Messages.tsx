@@ -130,7 +130,7 @@ export function CustomerMessages() {
       </div>
 
       {/* Conversations List */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto pb-16">
         {conversations.map((conversation) => (
           <button
             key={conversation.id}
@@ -154,6 +154,11 @@ export function CustomerMessages() {
             )}
           </button>
         ))}
+      </div>
+
+      {/* Bottom Nav */}
+      <div className="absolute bottom-0 left-0 right-0">
+        <CustomerNav />
       </div>
     </div>
   );
