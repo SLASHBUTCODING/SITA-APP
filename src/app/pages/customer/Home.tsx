@@ -244,7 +244,7 @@ export function CustomerHome() {
           nearbyDrivers={nearbyDrivers}
           destinationLocation={destinationCoords ? [destinationCoords.lat, destinationCoords.lng] : undefined}
           routeCoordinates={routeCoords}
-          zoom={17}
+          zoom={19}
           className="w-full h-full"
         />
         
