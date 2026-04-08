@@ -458,8 +458,17 @@ export function CustomerHome() {
                   </>
                 )}
 
-                {/* Recent and Presets - show when no search results */}
+                {/* Empty state - encourage typing first */}
                 {!searchLoading && searchResults.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-8">
+                    <Search className="w-8 h-8 text-gray-300 mb-2" />
+                    <p className="text-sm text-gray-400 text-center">Start typing to search for a destination</p>
+                    <p className="text-xs text-gray-300 text-center mt-1">You can type any address or place name</p>
+                  </div>
+                )}
+
+                {/* Show presets only after user has typed and cleared search */}
+                {!searchLoading && searchResults.length === 0 && searchQuery.trim() !== "" && (
                   <>
                     <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-3">Recent</p>
                     {RECENT.map((r, i) => (
