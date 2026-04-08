@@ -4,7 +4,7 @@ import { Home, Clock, MessageCircle, User } from "lucide-react";
 const navItems = [
   { icon: Home, label: "Home", path: "/customer/home" },
   { icon: Clock, label: "History", path: "/customer/history" },
-  { icon: MessageCircle, label: "Messages", path: "/customer/home" },
+  { icon: MessageCircle, label: "Messages", path: "/customer/messages" },
   { icon: User, label: "Profile", path: "/customer/profile" },
 ];
 

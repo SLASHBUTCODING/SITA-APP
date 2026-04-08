@@ -14,6 +14,7 @@ import { CustomerOTPVerification } from "./pages/customer/OTPVerification";
 import { CustomerWallet } from "./pages/customer/Wallet";
 import { CustomerNotifications } from "./pages/customer/Notifications";
 import { CustomerPromos } from "./pages/customer/Promos";
+import { CustomerMessages } from "./pages/customer/Messages";
 import { DriverHome } from "./pages/driver/Home";
 import { DriverRequest } from "./pages/driver/IncomingRequest";
 import { DriverRideActive } from "./pages/driver/RideActive";
@@ -47,6 +48,7 @@ export const router = createBrowserRouter([
       { path: "customer/wallet", Component: CustomerWallet },
       { path: "customer/notifications", Component: CustomerNotifications },
       { path: "customer/promos", Component: CustomerPromos },
+      { path: "customer/messages", Component: CustomerMessages },
       // Driver routes
       { path: "driver/signup", Component: DriverSignup },
       { path: "driver/login", Component: DriverLogin },
