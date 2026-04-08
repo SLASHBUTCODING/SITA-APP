@@ -24,6 +24,7 @@ export function Root() {
 
       {/* Phone frame */}
       <div
+        id="phone-frame"
         className="relative bg-white overflow-hidden shadow-2xl w-full"
         style={{
           maxWidth: "390px",

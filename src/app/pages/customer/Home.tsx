@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
+import ReactDOM from "react-dom";
 import { useNavigate } from "react-router";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Search, MapPin, ChevronRight, Bell, Navigation, Clock, X } from "lucide-react";
 import { SITAMap } from "../../components/SITAMap";
 import { watchNearbyDrivers } from "../../../services/realtimeTracking";
@@ -273,16 +274,15 @@ export function CustomerHome() {
         </div>
       </div>
 
-      {/* Search Modal - covers full screen when focused */}
-      <AnimatePresence>
-        {searchFocused && (
+      {/* Search Modal - portal into phone-frame so absolute inset-0 works correctly */}
+      {searchFocused && ReactDOM.createPortal(
+        <AnimatePresence>
           <motion.div
             key="search"
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
-            className="fixed z-[9999] bg-white flex flex-col overflow-hidden"
-            style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "min(100vw, 390px)", height: "min(844px, calc(100vh - 80px))", borderRadius: "clamp(0px, 3vw, 40px)" }}
+            className="absolute inset-0 z-[9999] bg-white flex flex-col"
           >
             <div className="pt-12 px-4 pb-3 border-b border-gray-100">
               <div className="flex items-center gap-3 mb-3">
@@ -352,8 +352,9 @@ export function CustomerHome() {
               )}
             </div>
           </motion.div>
-        )}
-      </AnimatePresence>
+        </AnimatePresence>,
+        document.getElementById("phone-frame") || document.body
+      )}
 
       {/* Booking Panel */}
       <div className="flex-1 overflow-y-auto pb-16">
