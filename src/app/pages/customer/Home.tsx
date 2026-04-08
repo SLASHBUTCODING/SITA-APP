@@ -281,7 +281,8 @@ export function CustomerHome() {
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
-            className="fixed inset-0 z-[9999] bg-white flex flex-col"
+            className="fixed z-[9999] bg-white flex flex-col overflow-hidden"
+            style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "min(100vw, 390px)", height: "min(844px, calc(100vh - 80px))", borderRadius: "clamp(0px, 3vw, 40px)" }}
           >
             <div className="pt-12 px-4 pb-3 border-b border-gray-100">
               <div className="flex items-center gap-3 mb-3">
