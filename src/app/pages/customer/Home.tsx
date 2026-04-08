@@ -236,7 +236,7 @@ export function CustomerHome() {
   };
 
   return (
-    <div className="relative flex flex-col h-full overflow-hidden">
+    <div className="relative flex flex-col h-full">
       {/* Map Container - Fixed 42% height */}
       <div className="h-[42vh] flex-shrink-0 relative overflow-hidden">
         <SITAMap
