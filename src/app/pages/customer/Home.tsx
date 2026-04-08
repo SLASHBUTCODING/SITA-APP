@@ -281,7 +281,7 @@ export function CustomerHome() {
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
-            className="absolute inset-0 z-30 bg-white flex flex-col"
+            className="fixed inset-0 z-[9999] bg-white flex flex-col"
           >
             <div className="pt-12 px-4 pb-3 border-b border-gray-100">
               <div className="flex items-center gap-3 mb-3">
