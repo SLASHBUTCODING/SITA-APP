@@ -8,6 +8,9 @@ export function DriverSignup() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [licenseFile, setLicenseFile] = useState<File | null>(null);
+  const [nbiFile, setNbiFile] = useState<File | null>(null);
+  const [barangayFile, setBarangayFile] = useState<File | null>(null);
+  const [medicalFile, setMedicalFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -22,9 +25,23 @@ export function DriverSignup() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'license' | 'nbi' | 'barangay' | 'medical') => {
     if (e.target.files && e.target.files[0]) {
-      setLicenseFile(e.target.files[0]);
+      const file = e.target.files[0];
+      switch (type) {
+        case 'license':
+          setLicenseFile(file);
+          break;
+        case 'nbi':
+          setNbiFile(file);
+          break;
+        case 'barangay':
+          setBarangayFile(file);
+          break;
+        case 'medical':
+          setMedicalFile(file);
+          break;
+      }
     }
   };
 
@@ -35,8 +52,20 @@ export function DriverSignup() {
     setError("");
     setLoading(true);
     try {
-      const licenseUrl = "placeholder_license_url";
-      const res = await authApi.driverRegister({ ...formData, licenseUrl });
+      // In a real app, you'd upload files to Supabase Storage here
+      // For now, using placeholder URLs
+      const licenseUrl = licenseFile ? "placeholder_license_url" : undefined;
+      const nbiUrl = nbiFile ? "placeholder_nbi_url" : undefined;
+      const barangayUrl = barangayFile ? "placeholder_barangay_url" : undefined;
+      const medicalUrl = medicalFile ? "placeholder_medical_url" : undefined;
+      
+      const res = await authApi.driverRegister({ 
+        ...formData, 
+        licenseUrl, 
+        nbiClearanceUrl: nbiUrl,
+        barangayClearanceUrl: barangayUrl,
+        medicalCertificateUrl: medicalUrl
+      });
       saveAuth(res.token, res.driver, "driver");
       setRegistered(true);
     } catch (err) {
@@ -69,7 +98,7 @@ export function DriverSignup() {
               <Shield className="w-4 h-4 text-[#F47920]" />
               <span className="text-white text-sm font-semibold">What happens next?</span>
             </div>
-            <p className="text-gray-400 text-xs pl-6">1. Admin reviews your details and license</p>
+            <p className="text-gray-400 text-xs pl-6">1. Admin reviews your details and documents</p>
             <p className="text-gray-400 text-xs pl-6">2. You will be notified once approved</p>
             <p className="text-gray-400 text-xs pl-6">3. Log in and start accepting rides!</p>
           </div>
@@ -256,54 +285,203 @@ export function DriverSignup() {
             </div>
           </div>
 
-          {/* Driver's License Upload */}
+          {/* Documents Upload */}
           <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <h2 className="text-gray-800 font-bold text-sm mb-2 flex items-center gap-2">
+            <h2 className="text-gray-800 font-bold text-sm mb-4 flex items-center gap-2">
               <FileText className="w-4 h-4 text-[#F47920]" />
-              Driver's License
+              Required Documents
             </h2>
-            <p className="text-xs text-gray-500 mb-3">I-upload ang kopya ng iyong lisensya</p>
+            <p className="text-xs text-gray-500 mb-4">I-upload ang lahat ng kailangang dokumento</p>
 
-            <label className="block">
-              <input
-                type="file"
-                accept="image/*,.pdf"
-                onChange={handleFileChange}
-                className="hidden"
-                required
-              />
-              <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:border-[#F47920] transition-colors">
-                {licenseFile ? (
-                  <div className="flex flex-col items-center gap-2">
-                    <CheckCircle className="w-10 h-10 text-green-500" />
-                    <p className="text-sm font-semibold text-gray-800">{licenseFile.name}</p>
-                    <p className="text-xs text-gray-500">
-                      {(licenseFile.size / 1024).toFixed(1)} KB
-                    </p>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setLicenseFile(null);
-                      }}
-                      className="text-xs text-[#F47920] font-semibold mt-1"
-                    >
-                      Palitan
-                    </button>
+            <div className="space-y-4">
+              {/* Driver's License */}
+              <div>
+                <label className="text-gray-700 text-xs font-semibold mb-2 block">
+                  Driver's License <span className="text-[#F47920]">*</span>
+                </label>
+                <label className="block">
+                  <input
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={(e) => handleFileChange(e, 'license')}
+                    className="hidden"
+                    required
+                  />
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center cursor-pointer hover:border-[#F47920] transition-colors">
+                    {licenseFile ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <CheckCircle className="w-8 h-8 text-green-500" />
+                        <p className="text-xs font-semibold text-gray-800">{licenseFile.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {(licenseFile.size / 1024).toFixed(1)} KB
+                        </p>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setLicenseFile(null);
+                          }}
+                          className="text-xs text-[#F47920] font-semibold"
+                        >
+                          Palitan
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="w-10 h-10 bg-[#F47920]/10 rounded-full flex items-center justify-center">
+                          <Upload className="w-5 h-5 text-[#F47920]" />
+                        </div>
+                        <p className="text-xs font-semibold text-gray-800">
+                          Click to upload license
+                        </p>
+                        <p className="text-xs text-gray-500">PNG, JPG, or PDF</p>
+                      </div>
+                    )}
                   </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="w-12 h-12 bg-[#F47920]/10 rounded-full flex items-center justify-center">
-                      <Upload className="w-6 h-6 text-[#F47920]" />
-                    </div>
-                    <p className="text-sm font-semibold text-gray-800">
-                      Click to upload license
-                    </p>
-                    <p className="text-xs text-gray-500">PNG, JPG, or PDF (max 5MB)</p>
-                  </div>
-                )}
+                </label>
               </div>
-            </label>
+
+              {/* NBI Clearance */}
+              <div>
+                <label className="text-gray-700 text-xs font-semibold mb-2 block">
+                  NBI Clearance <span className="text-[#F47920]">*</span>
+                </label>
+                <label className="block">
+                  <input
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={(e) => handleFileChange(e, 'nbi')}
+                    className="hidden"
+                    required
+                  />
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center cursor-pointer hover:border-[#F47920] transition-colors">
+                    {nbiFile ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <CheckCircle className="w-8 h-8 text-green-500" />
+                        <p className="text-xs font-semibold text-gray-800">{nbiFile.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {(nbiFile.size / 1024).toFixed(1)} KB
+                        </p>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setNbiFile(null);
+                          }}
+                          className="text-xs text-[#F47920] font-semibold"
+                        >
+                          Palitan
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="w-10 h-10 bg-[#F47920]/10 rounded-full flex items-center justify-center">
+                          <Upload className="w-5 h-5 text-[#F47920]" />
+                        </div>
+                        <p className="text-xs font-semibold text-gray-800">
+                          Click to upload NBI clearance
+                        </p>
+                        <p className="text-xs text-gray-500">PNG, JPG, or PDF</p>
+                      </div>
+                    )}
+                  </div>
+                </label>
+              </div>
+
+              {/* Barangay Clearance */}
+              <div>
+                <label className="text-gray-700 text-xs font-semibold mb-2 block">
+                  Barangay Clearance <span className="text-[#F47920]">*</span>
+                </label>
+                <label className="block">
+                  <input
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={(e) => handleFileChange(e, 'barangay')}
+                    className="hidden"
+                    required
+                  />
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center cursor-pointer hover:border-[#F47920] transition-colors">
+                    {barangayFile ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <CheckCircle className="w-8 h-8 text-green-500" />
+                        <p className="text-xs font-semibold text-gray-800">{barangayFile.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {(barangayFile.size / 1024).toFixed(1)} KB
+                        </p>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setBarangayFile(null);
+                          }}
+                          className="text-xs text-[#F47920] font-semibold"
+                        >
+                          Palitan
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="w-10 h-10 bg-[#F47920]/10 rounded-full flex items-center justify-center">
+                          <Upload className="w-5 h-5 text-[#F47920]" />
+                        </div>
+                        <p className="text-xs font-semibold text-gray-800">
+                          Click to upload barangay clearance
+                        </p>
+                        <p className="text-xs text-gray-500">PNG, JPG, or PDF</p>
+                      </div>
+                    )}
+                  </div>
+                </label>
+              </div>
+
+              {/* Medical Certificate */}
+              <div>
+                <label className="text-gray-700 text-xs font-semibold mb-2 block">
+                  Medical Certificate <span className="text-[#F47920]">*</span>
+                </label>
+                <label className="block">
+                  <input
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={(e) => handleFileChange(e, 'medical')}
+                    className="hidden"
+                    required
+                  />
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center cursor-pointer hover:border-[#F47920] transition-colors">
+                    {medicalFile ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <CheckCircle className="w-8 h-8 text-green-500" />
+                        <p className="text-xs font-semibold text-gray-800">{medicalFile.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {(medicalFile.size / 1024).toFixed(1)} KB
+                        </p>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setMedicalFile(null);
+                          }}
+                          className="text-xs text-[#F47920] font-semibold"
+                        >
+                          Palitan
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="w-10 h-10 bg-[#F47920]/10 rounded-full flex items-center justify-center">
+                          <Upload className="w-5 h-5 text-[#F47920]" />
+                        </div>
+                        <p className="text-xs font-semibold text-gray-800">
+                          Click to upload medical certificate
+                        </p>
+                        <p className="text-xs text-gray-500">PNG, JPG, or PDF</p>
+                      </div>
+                    )}
+                  </div>
+                </label>
+              </div>
+            </div>
           </div>
 
           {/* Terms */}
