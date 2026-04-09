@@ -138,14 +138,15 @@ export function SITAMap({
       scrollWheelZoom: false,
     });
 
-    // OpenStreetMap tiles (100% free)
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap contributors",
+    // CartoDB Positron tiles (clean minimal look, 100% free)
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+      attribution: "© OpenStreetMap contributors © CARTO",
+      subdomains: "abcd",
       maxZoom: 19,
     }).addTo(map);
 
     // Small attribution
-    L.control.attribution({ prefix: "© OSM" }).addTo(map);
+    L.control.attribution({ prefix: "© OSM © CARTO" }).addTo(map);
 
     // Click handler
     if (onMapClick) {
