@@ -156,6 +156,11 @@ export function SITAMap({
 
     mapRef.current = map;
 
+    // Invalidate size after mount so Leaflet recalculates container dimensions
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 100);
+
     return () => {
       map.remove();
       mapRef.current = null;
