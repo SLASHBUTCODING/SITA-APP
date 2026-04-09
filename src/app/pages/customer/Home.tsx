@@ -228,9 +228,9 @@ export function CustomerHome() {
         }
       },
       {
-        enableHighAccuracy: true,
+        enableHighAccuracy: false,
         timeout: 15000,
-        maximumAge: 30000  // Accept 30s cached position - better for iOS battery
+        maximumAge: 120000 // Accept 2min cached position for customer - saves data
       }
     );
   };
@@ -266,7 +266,7 @@ export function CustomerHome() {
           nearbyDrivers={nearbyDrivers}
           destinationLocation={destinationCoords ? [destinationCoords.lat, destinationCoords.lng] : undefined}
           routeCoordinates={routeCoords}
-          zoom={19}
+          zoom={15}
           className="w-full h-full"
         />
         
