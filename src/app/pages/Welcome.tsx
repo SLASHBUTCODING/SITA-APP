@@ -1,8 +1,6 @@
-import { useEffect } from "react";
 import { useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { Shield, Clock, Star } from "lucide-react";
-import { getStoredUser, getStoredRole } from "../services/api";
 
 const HERO_IMAGE =
   "https://images.unsplash.com/photo-1728021535696-d61d997044d8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0cmljeWNsZSUyMHNpZGVjYXIlMjBwaGlsaXBwaW5lcyUyMHN0cmVldHxlbnwxfHx8fDE3NzQ1NzExNTd8MA&ixlib=rb-4.1.0&q=80&w=1080";
@@ -16,16 +14,7 @@ const features = [
 export function Welcome() {
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const user = getStoredUser();
-    const role = getStoredRole();
-    if (user && role === 'driver') {
-      navigate('/driver/home', { replace: true });
-    } else if (user && role === 'user') {
-      navigate('/customer/home', { replace: true });
-    }
-  }, []);
-
+  
   return (
     <div className="relative h-screen w-full flex flex-col overflow-hidden bg-[#1a1a2e]">
       {/* Hero Image */}
