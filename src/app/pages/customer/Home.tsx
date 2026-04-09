@@ -430,7 +430,7 @@ export function CustomerHome() {
       </AnimatePresence>
 
       {/* Booking Panel */}
-      <div className="flex-1 overflow-y-auto pb-16">
+      <div className="flex-1 overflow-y-auto">
         {/* Bottom Booking Sheet */}
         <AnimatePresence>
           {!searchFocused && (
@@ -584,6 +584,7 @@ export function CustomerHome() {
                   >
                     {booking ? "Nagbo-book..." : dropoff ? "Mag-Book ng Tricycle" : "Pumili ng Destinasyon"}
                   </motion.button>
+                  <div className="h-4" />
                 </>
               )}
             </motion.div>
@@ -591,10 +592,8 @@ export function CustomerHome() {
         </AnimatePresence>
       </div>
 
-      {/* Bottom Nav - always at bottom */}
-      <div className="absolute bottom-0 left-0 right-0">
-        <CustomerNav />
-      </div>
+      {/* Bottom Nav - real footer, not overlay */}
+      <CustomerNav />
     </div>
   );
 }
