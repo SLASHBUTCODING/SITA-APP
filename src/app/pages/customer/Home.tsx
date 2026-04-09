@@ -148,11 +148,11 @@ export function CustomerHome() {
     }
   };
 
-  // Search locations using Nominatim API with debounce and GPS bias
+  // Search locations using Photon API (better PH coverage, no rate limits, no API key)
   const searchLocations = (query: string) => {
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
 
-    if (!query.trim() || query.trim().length < 3) {
+    if (!query.trim() || query.trim().length < 2) {
       setSearchResults([]);
       setSearchLoading(false);
       return;
@@ -164,31 +164,51 @@ export function CustomerHome() {
       try {
         const params = new URLSearchParams({
           q: query,
-          format: "json",
-          countrycodes: "ph",
           limit: "8",
-          addressdetails: "1",
-          "accept-language": "en",
+          lang: "en",
         });
 
+        // GPS bias: search near user's location if available
         if (currentCoords) {
           params.set("lat", String(currentCoords.lat));
           params.set("lon", String(currentCoords.lng));
+        } else {
+          // Default bias: center of Philippines
+          params.set("lat", "12.8797");
+          params.set("lon", "121.7740");
         }
 
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?${params.toString()}`,
-          { headers: { "Accept-Language": "en" } }
+          `https://photon.komoot.io/api/?${params.toString()}`
         );
         const data = await response.json();
-        setSearchResults(data);
+
+        // Photon returns GeoJSON — map to same shape as before
+        const results = (data.features ?? []).map((f: any) => {
+          const p = f.properties;
+          const parts = [
+            p.name,
+            p.street && p.housenumber ? `${p.street} ${p.housenumber}` : p.street,
+            p.district || p.suburb,
+            p.city || p.county,
+            p.state,
+            p.country,
+          ].filter(Boolean);
+          return {
+            display_name: parts.join(", "),
+            lat: String(f.geometry.coordinates[1]),
+            lon: String(f.geometry.coordinates[0]),
+          };
+        });
+
+        setSearchResults(results);
       } catch (error) {
         console.error('Search error:', error);
         setSearchResults([]);
       } finally {
         setSearchLoading(false);
       }
-    }, 400);
+    }, 350);
   };
 
   // Calculate distance using Haversine formula
