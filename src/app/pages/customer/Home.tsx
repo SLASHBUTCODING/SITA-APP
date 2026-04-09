@@ -1,23 +1,22 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, MapPin, ChevronRight, Bell, Navigation, Clock, X } from "lucide-react";
+import { Search, MapPin, ChevronRight, Bell, Navigation, Clock, X, Plus, Pencil } from "lucide-react";
 import { SITAMap } from "../../components/SITAMap";
 import { watchNearbyDrivers } from "../../../services/realtimeTracking";
 import { CustomerNav } from "../../components/CustomerNav";
 import { getStoredUser, ridesApi, type UserData, type RideData } from "../../services/api";
 
-const QUICK_DESTINATIONS = [
-  { icon: "🏠", label: "Home", address: "Blk 5 Lot 12, Brgy. San Jose" },
-  { icon: "💼", label: "Work", address: "Municipal Hall, Poblacion" },
-  { icon: "🏥", label: "Health Center", address: "Brgy. Health Center, Purok 3" },
-  { icon: "🛒", label: "Palengke", address: "Public Market, Poblacion" },
-];
+const PLACE_SLOTS = [
+  { key: "home", icon: "🏠", label: "Home" },
+  { key: "work", icon: "💼", label: "Work" },
+  { key: "health", icon: "🏥", label: "Health Center" },
+  { key: "market", icon: "🛒", label: "Palengke" },
+] as const;
 
-const RECENT = [
-  { place: "Covered Court, Brgy. Sta. Cruz", address: "Purok 2, Sta. Cruz" },
-  { place: "Elementary School", address: "Brgy. San Roque, Purok 1" },
-];
+type PlaceKey = typeof PLACE_SLOTS[number]["key"];
+type SavedPlace = { address: string; lat?: number; lng?: number };
+type SavedPlaces = Partial<Record<PlaceKey, SavedPlace>>;
 
 const DEFAULT_MARKERS = [
   { x: 50, y: 56, type: "pickup" as const },
@@ -48,9 +47,26 @@ export function CustomerHome() {
   const [estimatedFare, setEstimatedFare] = useState(0);
   const [searchLoading, setSearchLoading] = useState(false);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [savedPlaces, setSavedPlaces] = useState<SavedPlaces>({});
+  const [settingPlace, setSettingPlace] = useState<PlaceKey | null>(null);
 
   const user = getStoredUser<UserData>();
   const displayName = user ? `${user.first_name} ${user.last_name}` : "Pasahero";
+  const placesKey = `sita_saved_places_${user?.id ?? "guest"}`;
+
+  useEffect(() => {
+    const stored = localStorage.getItem(placesKey);
+    if (stored) {
+      try { setSavedPlaces(JSON.parse(stored)); } catch { /* ignore */ }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [placesKey]);
+
+  const savePlaceToStorage = (key: PlaceKey, place: SavedPlace) => {
+    const updated = { ...savedPlaces, [key]: place };
+    setSavedPlaces(updated);
+    localStorage.setItem(placesKey, JSON.stringify(updated));
+  };
 
   useEffect(() => {
     // Watch nearby drivers with real-time updates
@@ -109,6 +125,14 @@ export function CustomerHome() {
       lat: parseFloat(result.lat),
       lng: parseFloat(result.lon)
     };
+    if (settingPlace) {
+      savePlaceToStorage(settingPlace, { address: result.display_name, ...coords });
+      setSettingPlace(null);
+      setSearchFocused(false);
+      setSearchQuery("");
+      setSearchResults([]);
+      return;
+    }
     handleDestinationSelect(result.display_name, coords);
   };
 
@@ -307,10 +331,19 @@ export function CustomerHome() {
           >
             <div className="pt-12 px-4 pb-3 border-b border-gray-100">
               <div className="flex items-center gap-3 mb-3">
-                <button onClick={() => { setSearchFocused(false); setSearchQuery(""); setSearchResults([]); }} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100">
+                <button onClick={() => { setSearchFocused(false); setSearchQuery(""); setSearchResults([]); setSettingPlace(null); }} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100">
                   <X className="w-4 h-4 text-gray-600" />
                 </button>
-                <h2 className="font-bold text-gray-800">{activeField === "pickup" ? "Set Pickup" : "Piliin ang Destinasyon"}</h2>
+                <div>
+                  <h2 className="font-bold text-gray-800">
+                    {settingPlace
+                      ? `I-set ang ${PLACE_SLOTS.find(s => s.key === settingPlace)?.label}`
+                      : activeField === "pickup" ? "Set Pickup" : "Piliin ang Destinasyon"}
+                  </h2>
+                  {settingPlace && (
+                    <p className="text-xs text-gray-400">Hanapin ang lugar at i-tap para i-save</p>
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-3 bg-gray-50 border border-[#F47920] rounded-xl px-3 py-2.5">
                 <Search className="w-4 h-4 text-gray-400" />
@@ -452,28 +485,62 @@ export function CustomerHome() {
                     )}
                   </div>
 
-                  {/* Quick destinations */}
+                  {/* Saved Places */}
                   <div className="grid grid-cols-2 gap-2 mb-4">
-                    {QUICK_DESTINATIONS.map((dest) => (
-                      <button
-                        key={dest.label}
-                        onClick={(e) => { 
-                          e.stopPropagation(); 
-                          console.log('Quick destination clicked:', dest.label, dest.address);
-                          setActiveField("dropoff"); 
-                          // For now, just set address without coordinates
-                          // In a real app, you'd geocode these addresses
-                          handleDestinationSelect(dest.address); 
-                        }}
-                        className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2 text-left hover:bg-orange-50 transition-colors border border-gray-100"
-                      >
-                        <span className="text-base">{dest.icon}</span>
-                        <div>
-                          <p className="text-xs font-semibold text-gray-700">{dest.label}</p>
-                          <p className="text-[10px] text-gray-400 truncate">{dest.address.split(",")[0]}</p>
+                    {PLACE_SLOTS.map((slot) => {
+                      const saved = savedPlaces[slot.key];
+                      return (
+                        <div key={slot.key} className="relative group">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (saved) {
+                                setActiveField("dropoff");
+                                handleDestinationSelect(saved.address, saved.lat && saved.lng ? { lat: saved.lat, lng: saved.lng } : undefined);
+                              } else {
+                                setSettingPlace(slot.key);
+                                setActiveField("dropoff");
+                                setSearchQuery("");
+                                setSearchResults([]);
+                                setSearchFocused(true);
+                              }
+                            }}
+                            className={`w-full flex items-center gap-2 rounded-xl px-3 py-2.5 text-left transition-colors border ${
+                              saved
+                                ? "bg-gray-50 border-gray-100 hover:bg-orange-50"
+                                : "bg-gray-50 border-dashed border-gray-200 hover:bg-orange-50"
+                            }`}
+                          >
+                            <span className="text-base">{slot.icon}</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold text-gray-700">{slot.label}</p>
+                              {saved ? (
+                                <p className="text-[10px] text-gray-400 truncate">{saved.address.split(",")[0]}</p>
+                              ) : (
+                                <p className="text-[10px] text-[#F47920] flex items-center gap-0.5">
+                                  <Plus className="w-2.5 h-2.5" /> I-set
+                                </p>
+                              )}
+                            </div>
+                          </button>
+                          {saved && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSettingPlace(slot.key);
+                                setActiveField("dropoff");
+                                setSearchQuery("");
+                                setSearchResults([]);
+                                setSearchFocused(true);
+                              }}
+                              className="absolute top-1 right-1 w-5 h-5 bg-white rounded-full shadow-sm border border-gray-100 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <Pencil className="w-2.5 h-2.5 text-gray-400" />
+                            </button>
+                          )}
                         </div>
-                      </button>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   {/* Estimated Fare */}
