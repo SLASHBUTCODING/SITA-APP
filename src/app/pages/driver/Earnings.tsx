@@ -83,7 +83,7 @@ export function DriverEarnings() {
   const totalTripsMonth = earningsSummary.month?.trips ?? 47;
 
   return (
-    <div className="h-full w-full flex flex-col bg-gray-50 overflow-hidden">
+    <div className="h-screen w-full flex flex-col bg-gray-50 overflow-hidden">
       {/* Header */}
       <div className="bg-gradient-to-b from-[#1a1a2e] to-[#2d2d4e] pt-12 pb-6 px-5">
         <div className="flex items-center justify-between mb-4">

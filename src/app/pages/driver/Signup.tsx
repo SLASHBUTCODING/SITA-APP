@@ -48,7 +48,7 @@ export function DriverSignup() {
 
   if (registered) {
     return (
-      <div className="h-full w-full flex flex-col items-center justify-center bg-[#1a1a2e] px-6">
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-[#1a1a2e] px-6">
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -86,7 +86,7 @@ export function DriverSignup() {
   }
 
   return (
-    <div className="h-full w-full flex flex-col bg-gray-50 overflow-hidden">
+    <div className="h-screen w-full flex flex-col bg-gray-50 overflow-hidden">
       {/* Header */}
       <div className="bg-gradient-to-b from-[#1a1a2e] to-[#2d2d4e] pt-12 pb-8 px-5 relative">
         <button

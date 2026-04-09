@@ -7,6 +7,17 @@ html, body, #root {
   width: 100%;
 }
 
+/* Safe area inset helpers for notch/home-bar phones */
+.pt-safe {
+  padding-top: max(48px, env(safe-area-inset-top, 48px));
+}
+.pb-safe {
+  padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
+}
+.mb-safe {
+  margin-bottom: max(64px, calc(64px + env(safe-area-inset-bottom, 0px)));
+}
+
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }

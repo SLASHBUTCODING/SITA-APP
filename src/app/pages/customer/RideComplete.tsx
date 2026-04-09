@@ -39,7 +39,7 @@ export function CustomerComplete() {
   };
 
   return (
-    <div className="h-full w-full bg-white flex flex-col overflow-hidden">
+    <div className="h-screen w-full bg-white flex flex-col overflow-hidden">
       <AnimatePresence mode="wait">
         {submitted ? (
           <motion.div

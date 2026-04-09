@@ -30,7 +30,7 @@ export function DriverLogin() {
   };
 
   return (
-    <div className="h-full w-full flex flex-col bg-[#1a1a2e] overflow-hidden">
+    <div className="h-screen w-full flex flex-col bg-[#1a1a2e] overflow-hidden">
       {/* Header */}
       <div className="bg-gradient-to-b from-[#F47920] to-[#F47920]/90 pt-12 pb-8 px-5 relative">
         <button

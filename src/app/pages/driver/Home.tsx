@@ -111,9 +111,9 @@ export function DriverHome() {
   };
 
   return (
-    <div className="relative h-full w-full flex flex-col bg-[#1a1a2e] overflow-hidden">
+    <div className="relative h-screen w-full flex flex-col bg-[#1a1a2e] overflow-hidden">
       {/* Top Header */}
-      <div className="relative z-10 flex items-center justify-between px-4 pt-12 pb-3">
+      <div className="relative z-10 flex items-center justify-between px-4 pt-safe pb-3">
         <div className="flex items-center gap-3">
           <img src={DRIVER_IMAGE} alt="Driver" className="w-10 h-10 rounded-full object-cover border-2 border-[#F47920]" />
           <div>
@@ -225,7 +225,7 @@ export function DriverHome() {
       </div>
 
       {/* Tip */}
-      <div className="relative z-10 mx-4 mt-3 mb-20">
+      <div className="relative z-10 mx-4 mt-3 mb-safe">
         <div className="bg-white/5 rounded-xl px-3 py-2.5 flex items-center gap-2">
           <Zap className="w-3.5 h-3.5 text-[#F47920] flex-shrink-0" />
           <p className="text-gray-400 text-xs">{TIPS[tipIndex]}</p>

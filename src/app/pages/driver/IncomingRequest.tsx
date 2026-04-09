@@ -55,7 +55,7 @@ export function DriverRequest() {
   };
 
   return (
-    <div className="relative h-full w-full bg-[#1a1a2e] flex flex-col overflow-hidden">
+    <div className="relative h-screen w-full bg-[#1a1a2e] flex flex-col overflow-hidden">
       {/* Map background */}
       <div className="flex-1 relative">
         <SITAMap className="w-full h-full" />

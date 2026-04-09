@@ -16,7 +16,7 @@ export function DriverRideDone() {
   const displayName = driver ? driver.first_name : "Driver";
 
   return (
-    <div className="h-full w-full bg-[#1a1a2e] flex flex-col overflow-hidden">
+    <div className="h-screen w-full bg-[#1a1a2e] flex flex-col overflow-hidden">
       {/* Success header */}
       <div className="bg-gradient-to-b from-[#F47920] to-[#e06810] pt-12 pb-16 px-5 text-center relative">
         <motion.div

@@ -27,7 +27,7 @@ export function Welcome() {
   }, []);
 
   return (
-    <div className="relative h-full w-full flex flex-col overflow-hidden bg-[#1a1a2e]">
+    <div className="relative h-screen w-full flex flex-col overflow-hidden bg-[#1a1a2e]">
       {/* Hero Image */}
       <div className="relative flex-1 overflow-hidden">
         <img
@@ -42,7 +42,7 @@ export function Welcome() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="absolute top-12 left-0 right-0 flex flex-col items-center"
+          className="absolute top-0 left-0 right-0 pt-safe flex flex-col items-center"
         >
           <div className="flex items-center gap-2 mb-1">
             <div className="w-12 h-12 bg-[#F47920] rounded-2xl flex items-center justify-center shadow-lg shadow-orange-900/40">

@@ -40,7 +40,7 @@ export function CustomerMessages() {
 
   if (selectedChat !== null && selectedConversation) {
     return (
-      <div className="flex flex-col h-full bg-white">
+      <div className="flex flex-col h-screen bg-white">
         {/* Chat Header */}
         <div className="flex items-center gap-3 bg-white border-b border-gray-100 px-4 py-3">
           <button 
@@ -111,7 +111,7 @@ export function CustomerMessages() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 relative">
+    <div className="flex flex-col h-screen bg-gray-50 relative">
       {/* Header */}
       <div className="bg-white border-b border-gray-100 px-4 py-3">
         <h2 className="text-lg font-bold text-gray-800">Messages</h2>
