@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, MapPin, ChevronRight, Bell, Navigation, Clock, X } from "lucide-react";
@@ -47,6 +47,7 @@ export function CustomerHome() {
   const [routeCoords, setRouteCoords] = useState<Array<[number, number]>>([]);
   const [estimatedFare, setEstimatedFare] = useState(0);
   const [searchLoading, setSearchLoading] = useState(false);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const user = getStoredUser<UserData>();
   const displayName = user ? `${user.first_name} ${user.last_name}` : "Pasahero";
@@ -123,26 +124,47 @@ export function CustomerHome() {
     }
   };
 
-  // Search locations using Nominatim API
-  const searchLocations = async (query: string) => {
-    if (!query.trim()) {
+  // Search locations using Nominatim API with debounce and GPS bias
+  const searchLocations = (query: string) => {
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+
+    if (!query.trim() || query.trim().length < 3) {
       setSearchResults([]);
+      setSearchLoading(false);
       return;
     }
 
     setSearchLoading(true);
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&countrycodes=ph&limit=5`
-      );
-      const data = await response.json();
-      setSearchResults(data);
-    } catch (error) {
-      console.error('Search error:', error);
-      setSearchResults([]);
-    } finally {
-      setSearchLoading(false);
-    }
+
+    searchDebounceRef.current = setTimeout(async () => {
+      try {
+        const params = new URLSearchParams({
+          q: query,
+          format: "json",
+          countrycodes: "ph",
+          limit: "8",
+          addressdetails: "1",
+          "accept-language": "en",
+        });
+
+        if (currentCoords) {
+          params.set("lat", String(currentCoords.lat));
+          params.set("lon", String(currentCoords.lng));
+        }
+
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?${params.toString()}`,
+          { headers: { "Accept-Language": "en" } }
+        );
+        const data = await response.json();
+        setSearchResults(data);
+      } catch (error) {
+        console.error('Search error:', error);
+        setSearchResults([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 400);
   };
 
   // Calculate distance using Haversine formula
