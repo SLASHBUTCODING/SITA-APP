@@ -150,6 +150,15 @@ export function Welcome() {
         <p className="text-center text-gray-500 text-xs">
           By continuing, you agree to SITA's Terms & Privacy Policy
         </p>
+        
+        <div className="text-center mt-4">
+          <button
+            onClick={() => navigate("/admin")}
+            className="text-gray-600 hover:text-gray-400 text-xs underline"
+          >
+            Admin Access
+          </button>
+        </div>
       </motion.div>
     </div>
   );

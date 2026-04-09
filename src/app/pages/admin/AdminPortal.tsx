@@ -4,7 +4,7 @@ import { motion } from "motion/react";
 import { supabase } from "../../../lib/supabase";
 import {
   CheckCircle, XCircle, Clock, LogOut, Eye, EyeOff,
-  Shield, Users, Car, RefreshCw
+  Shield, Users, Car, RefreshCw, FileText, Download, AlertCircle
 } from "lucide-react";
 
 const ADMIN_PASSWORD = "sita-admin-2024";
@@ -19,6 +19,9 @@ interface Driver {
   vehicle_model: string;
   vehicle_color: string;
   license_url?: string;
+  nbi_clearance_url?: string;
+  barangay_clearance_url?: string;
+  medical_certificate_url?: string;
   verification_status: "pending" | "verified" | "rejected";
   created_at: string;
 }
@@ -50,7 +53,7 @@ export function AdminPortal() {
     setLoading(true);
     const query = supabase
       .from("drivers")
-      .select("id, first_name, last_name, phone, email, plate_number, vehicle_model, vehicle_color, license_url, verification_status, created_at")
+      .select("id, first_name, last_name, phone, email, plate_number, vehicle_model, vehicle_color, license_url, nbi_clearance_url, barangay_clearance_url, medical_certificate_url, verification_status, created_at")
       .order("created_at", { ascending: false });
 
     if (filter !== "all") query.eq("verification_status", filter);
@@ -235,9 +238,69 @@ export function AdminPortal() {
                       <span className="truncate">{driver.plate_number} · {driver.vehicle_model} · {driver.vehicle_color}</span>
                     </div>
                     <p className="text-gray-500 text-xs">{driver.phone}</p>
+                    {driver.email && <p className="text-gray-500 text-xs">{driver.email}</p>}
                     <p className="text-gray-600 text-xs mt-0.5">
                       Applied: {new Date(driver.created_at).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })}
                     </p>
+                    
+                    {/* Documents */}
+                    <div className="mt-3 space-y-1">
+                      <p className="text-gray-400 text-xs font-semibold mb-1">Documents:</p>
+                      {driver.license_url && (
+                        <div className="flex items-center gap-1.5">
+                          <FileText className="w-3 h-3 text-blue-400" />
+                          <span className="text-gray-300 text-xs">Driver's License</span>
+                          <button
+                            onClick={() => window.open(driver.license_url, '_blank')}
+                            className="text-blue-400 hover:text-blue-300 text-xs flex items-center gap-0.5"
+                          >
+                            <Eye className="w-3 h-3" /> View
+                          </button>
+                        </div>
+                      )}
+                      {driver.nbi_clearance_url && (
+                        <div className="flex items-center gap-1.5">
+                          <FileText className="w-3 h-3 text-purple-400" />
+                          <span className="text-gray-300 text-xs">NBI Clearance</span>
+                          <button
+                            onClick={() => window.open(driver.nbi_clearance_url, '_blank')}
+                            className="text-blue-400 hover:text-blue-300 text-xs flex items-center gap-0.5"
+                          >
+                            <Eye className="w-3 h-3" /> View
+                          </button>
+                        </div>
+                      )}
+                      {driver.barangay_clearance_url && (
+                        <div className="flex items-center gap-1.5">
+                          <FileText className="w-3 h-3 text-green-400" />
+                          <span className="text-gray-300 text-xs">Barangay Clearance</span>
+                          <button
+                            onClick={() => window.open(driver.barangay_clearance_url, '_blank')}
+                            className="text-blue-400 hover:text-blue-300 text-xs flex items-center gap-0.5"
+                          >
+                            <Eye className="w-3 h-3" /> View
+                          </button>
+                        </div>
+                      )}
+                      {driver.medical_certificate_url && (
+                        <div className="flex items-center gap-1.5">
+                          <FileText className="w-3 h-3 text-red-400" />
+                          <span className="text-gray-300 text-xs">Medical Certificate</span>
+                          <button
+                            onClick={() => window.open(driver.medical_certificate_url, '_blank')}
+                            className="text-blue-400 hover:text-blue-300 text-xs flex items-center gap-0.5"
+                          >
+                            <Eye className="w-3 h-3" /> View
+                          </button>
+                        </div>
+                      )}
+                      {!driver.license_url && !driver.nbi_clearance_url && !driver.barangay_clearance_url && !driver.medical_certificate_url && (
+                        <div className="flex items-center gap-1.5">
+                          <AlertCircle className="w-3 h-3 text-yellow-400" />
+                          <span className="text-yellow-400 text-xs">No documents uploaded</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Action buttons */}
