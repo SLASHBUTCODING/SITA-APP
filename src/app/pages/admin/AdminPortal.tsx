@@ -1,11 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { motion } from "motion/react";
+import { Shield, Clock, Star, Eye, EyeOff, CheckCircle, XCircle, RotateCcw, AlertCircle, Car, FileText, DollarSign, Save, LogOut, RefreshCw, Users } from "lucide-react";
 import { supabase } from "../../../lib/supabase";
-import {
-  CheckCircle, XCircle, Clock, LogOut, Eye, EyeOff,
-  Shield, Users, Car, RefreshCw, FileText, Download, AlertCircle
-} from "lucide-react";
 
 const ADMIN_PASSWORD = "sita-admin-2024";
 
@@ -26,6 +23,15 @@ interface Driver {
   created_at: string;
 }
 
+interface PricingConfig {
+  id?: string;
+  base_fare: number;
+  per_km_rate: number;
+  minimum_fare: number;
+  waiting_time_rate: number;
+  updated_at?: string;
+}
+
 export function AdminPortal() {
   const navigate = useNavigate();
   const [authed, setAuthed] = useState(false);
@@ -38,6 +44,14 @@ export function AdminPortal() {
   const [filter, setFilter] = useState<"all" | "pending" | "verified" | "rejected">("pending");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [selected, setSelected] = useState<Driver | null>(null);
+  const [pricing, setPricing] = useState<PricingConfig>({
+    base_fare: 40,
+    per_km_rate: 15,
+    minimum_fare: 40,
+    waiting_time_rate: 2
+  });
+  const [pricingLoading, setPricingLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<"drivers" | "pricing">("drivers");
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,8 +77,45 @@ export function AdminPortal() {
     setLoading(false);
   };
 
+  const fetchPricing = async () => {
+    setPricingLoading(true);
+    const { data, error } = await supabase
+      .from("pricing_config")
+      .select("*")
+      .single();
+    
+    if (!error && data) {
+      setPricing(data as PricingConfig);
+    }
+    setPricingLoading(false);
+  };
+
+  const savePricing = async () => {
+    setPricingLoading(true);
+    const { error } = await supabase
+      .from("pricing_config")
+      .upsert({
+        id: pricing.id || 1,
+        base_fare: pricing.base_fare,
+        per_km_rate: pricing.per_km_rate,
+        minimum_fare: pricing.minimum_fare,
+        waiting_time_rate: pricing.waiting_time_rate
+      });
+    
+    if (!error) {
+      alert("Pricing updated successfully!");
+      fetchPricing();
+    } else {
+      alert("Error updating pricing: " + error.message);
+    }
+    setPricingLoading(false);
+  };
+
   useEffect(() => {
-    if (authed) fetchDrivers();
+    if (authed) {
+      fetchDrivers();
+      fetchPricing();
+    }
   }, [authed, filter]);
 
   const updateStatus = async (driverId: string, status: "verified" | "rejected") => {
@@ -176,15 +227,103 @@ export function AdminPortal() {
           ))}
         </div>
 
-        {/* Filter tabs */}
-        <div className="flex gap-2 mb-4 flex-wrap">
-          {(["pending", "verified", "rejected", "all"] as const).map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-4 py-1.5 rounded-full text-sm font-semibold capitalize transition-colors ${
-                filter === f
-                  ? "bg-[#F47920] text-white"
+        {/* Main tabs */}
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={() => setActiveTab("drivers")}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
+              activeTab === "drivers"
+                ? "bg-[#F47920] text-white"
+                : "bg-white/10 text-gray-400 hover:bg-white/20"
+            }`}
+          >
+            <Users className="w-4 h-4 inline mr-1" /> Drivers
+          </button>
+          <button
+            onClick={() => setActiveTab("pricing")}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
+              activeTab === "pricing"
+                ? "bg-[#F47920] text-white"
+                : "bg-white/10 text-gray-400 hover:bg-white/20"
+            }`}
+          >
+            <DollarSign className="w-4 h-4 inline mr-1" /> Pricing
+          </button>
+        </div>
+
+        {/* Pricing Configuration Section */}
+        {activeTab === "pricing" && (
+          <div className="bg-[#1a1a2e] border border-white/10 rounded-2xl p-6">
+            <h2 className="text-white font-bold text-lg mb-4 flex items-center gap-2">
+              <DollarSign className="w-5 h-5 text-[#F47920]" />
+              Pricing Configuration
+            </h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-gray-400 text-sm font-semibold mb-2 block">Base Fare (₱)</label>
+                <input
+                  type="number"
+                  value={pricing.base_fare}
+                  onChange={(e) => setPricing({...pricing, base_fare: parseFloat(e.target.value) || 0})}
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:border-[#F47920]"
+                />
+              </div>
+              
+              <div>
+                <label className="text-gray-400 text-sm font-semibold mb-2 block">Rate per Kilometer (₱)</label>
+                <input
+                  type="number"
+                  value={pricing.per_km_rate}
+                  onChange={(e) => setPricing({...pricing, per_km_rate: parseFloat(e.target.value) || 0})}
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:border-[#F47920]"
+                />
+              </div>
+              
+              <div>
+                <label className="text-gray-400 text-sm font-semibold mb-2 block">Minimum Fare (₱)</label>
+                <input
+                  type="number"
+                  value={pricing.minimum_fare}
+                  onChange={(e) => setPricing({...pricing, minimum_fare: parseFloat(e.target.value) || 0})}
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:border-[#F47920]"
+                />
+              </div>
+              
+              <div>
+                <label className="text-gray-400 text-sm font-semibold mb-2 block">Waiting Time Rate (₱/minute)</label>
+                <input
+                  type="number"
+                  value={pricing.waiting_time_rate}
+                  onChange={(e) => setPricing({...pricing, waiting_time_rate: parseFloat(e.target.value) || 0})}
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:border-[#F47920]"
+                />
+              </div>
+              
+              <button
+                onClick={savePricing}
+                disabled={pricingLoading}
+                className="w-full bg-[#F47920] text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                <Save className="w-4 h-4" />
+                {pricingLoading ? "Saving..." : "Save Pricing"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Driver Section */}
+        {activeTab === "drivers" && (
+          <>
+            {/* Filter tabs */}
+            <div className="flex gap-2 mb-4 flex-wrap">
+              {(["pending", "verified", "rejected", "all"] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={`px-4 py-1.5 rounded-full text-sm font-semibold capitalize transition-colors ${
+                    filter === f
+                      ? "bg-[#F47920] text-white"
                   : "bg-white/10 text-gray-300 hover:bg-white/20"
               }`}
             >
@@ -356,6 +495,7 @@ export function AdminPortal() {
               </motion.div>
             ))}
           </div>
+          </>
         )}
       </div>
     </div>
