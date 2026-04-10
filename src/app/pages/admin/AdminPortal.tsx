@@ -314,8 +314,6 @@ export function AdminPortal() {
 
         {/* Driver Section */}
         {activeTab === "drivers" && (
-          <div>
-            {/* Filter tabs */}
             <div className="flex gap-2 mb-4 flex-wrap">
               {(["pending", "verified", "rejected", "all"] as const).map((f) => (
                 <button
@@ -494,7 +492,6 @@ export function AdminPortal() {
                 </div>
               </motion.div>
             ))}
-          </div>
           </div>
         )}
       </div>
