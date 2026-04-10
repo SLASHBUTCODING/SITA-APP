@@ -312,8 +312,8 @@ export function AdminPortal() {
           </div>
         )}
 
-        {/* Driver Section */}
         {activeTab === "drivers" && (
+          <div>
             <div className="flex gap-2 mb-4 flex-wrap">
               {(["pending", "verified", "rejected", "all"] as const).map((f) => (
                 <button
@@ -322,176 +322,173 @@ export function AdminPortal() {
                   className={`px-4 py-1.5 rounded-full text-sm font-semibold capitalize transition-colors ${
                     filter === f
                       ? "bg-[#F47920] text-white"
-                  : "bg-white/10 text-gray-300 hover:bg-white/20"
-              }`}
-            >
-              {f}
-            </button>
-          ))}
-          <button
-            onClick={fetchDrivers}
-            className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm bg-white/10 text-gray-300 hover:bg-white/20"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Refresh
-          </button>
-        </div>
-
-        {/* Driver list */}
-        {loading ? (
-          <div className="text-center py-16 text-gray-500">Loading drivers...</div>
-        ) : drivers.length === 0 ? (
-          <div className="text-center py-16 text-gray-500">
-            <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
-            <p>No {filter === "all" ? "" : filter} drivers found.</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {drivers.map((driver) => (
-              <motion.div
-                key={driver.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-[#1a1a2e] border border-white/10 rounded-2xl p-4"
+                      : "bg-white/10 text-gray-300 hover:bg-white/20"
+                  }`}
+                >
+                  {f}
+                </button>
+              ))}
+              <button
+                onClick={fetchDrivers}
+                className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm bg-white/10 text-gray-300 hover:bg-white/20"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-white font-bold truncate">
-                        {driver.first_name} {driver.last_name}
-                      </h3>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-semibold flex-shrink-0 ${
-                        driver.verification_status === "verified"
-                          ? "bg-green-400/20 text-green-400"
-                          : driver.verification_status === "rejected"
-                          ? "bg-red-400/20 text-red-400"
-                          : "bg-yellow-400/20 text-yellow-400"
-                      }`}>
-                        {driver.verification_status}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
-                      <Car className="w-3.5 h-3.5 flex-shrink-0" />
-                      <span className="truncate">{driver.plate_number} · {driver.vehicle_model} · {driver.vehicle_color}</span>
-                    </div>
-                    <p className="text-gray-500 text-xs">{driver.phone}</p>
-                    {driver.email && <p className="text-gray-500 text-xs">{driver.email}</p>}
-                    <p className="text-gray-600 text-xs mt-0.5">
-                      Applied: {new Date(driver.created_at).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })}
-                    </p>
-                    
-                    {/* Documents */}
-                    <div className="mt-3 space-y-1">
-                      <p className="text-gray-400 text-xs font-semibold mb-1">Documents:</p>
-                      {driver.license_url && (
-                        <div className="flex items-center gap-1.5">
-                          <FileText className="w-3 h-3 text-blue-400" />
-                          <span className="text-gray-300 text-xs">Driver's License</span>
-                          {driver.license_url.includes('placeholder') ? (
-                            <span className="text-gray-500 text-xs italic">(Not uploaded)</span>
-                          ) : (
-                            <button
-                              onClick={() => window.open(driver.license_url, '_blank')}
-                              className="text-blue-400 hover:text-blue-300 text-xs flex items-center gap-0.5"
-                            >
-                              <Eye className="w-3 h-3" /> View
-                            </button>
-                          )}
-                        </div>
-                      )}
-                      {driver.nbi_clearance_url && (
-                        <div className="flex items-center gap-1.5">
-                          <FileText className="w-3 h-3 text-purple-400" />
-                          <span className="text-gray-300 text-xs">NBI Clearance</span>
-                          {driver.nbi_clearance_url.includes('placeholder') ? (
-                            <span className="text-gray-500 text-xs italic">(Not uploaded)</span>
-                          ) : (
-                            <button
-                              onClick={() => window.open(driver.nbi_clearance_url, '_blank')}
-                              className="text-blue-400 hover:text-blue-300 text-xs flex items-center gap-0.5"
-                            >
-                              <Eye className="w-3 h-3" /> View
-                            </button>
-                          )}
-                        </div>
-                      )}
-                      {driver.barangay_clearance_url && (
-                        <div className="flex items-center gap-1.5">
-                          <FileText className="w-3 h-3 text-green-400" />
-                          <span className="text-gray-300 text-xs">Barangay Clearance</span>
-                          {driver.barangay_clearance_url.includes('placeholder') ? (
-                            <span className="text-gray-500 text-xs italic">(Not uploaded)</span>
-                          ) : (
-                            <button
-                              onClick={() => window.open(driver.barangay_clearance_url, '_blank')}
-                              className="text-blue-400 hover:text-blue-300 text-xs flex items-center gap-0.5"
-                            >
-                              <Eye className="w-3 h-3" /> View
-                            </button>
-                          )}
-                        </div>
-                      )}
-                      {driver.medical_certificate_url && (
-                        <div className="flex items-center gap-1.5">
-                          <FileText className="w-3 h-3 text-red-400" />
-                          <span className="text-gray-300 text-xs">Medical Certificate</span>
-                          {driver.medical_certificate_url.includes('placeholder') ? (
-                            <span className="text-gray-500 text-xs italic">(Not uploaded)</span>
-                          ) : (
-                            <button
-                              onClick={() => window.open(driver.medical_certificate_url, '_blank')}
-                              className="text-blue-400 hover:text-blue-300 text-xs flex items-center gap-0.5"
-                            >
-                              <Eye className="w-3 h-3" /> View
-                            </button>
-                          )}
-                        </div>
-                      )}
-                      {!driver.license_url && !driver.nbi_clearance_url && !driver.barangay_clearance_url && !driver.medical_certificate_url && (
-                        <div className="flex items-center gap-1.5">
-                          <AlertCircle className="w-3 h-3 text-yellow-400" />
-                          <span className="text-yellow-400 text-xs">No documents uploaded</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                <RefreshCw className="w-4 h-4" />
+                Refresh
+              </button>
+            </div>
 
-                  {/* Action buttons */}
-                  <div className="flex flex-col gap-2 flex-shrink-0">
-                    {driver.verification_status !== "verified" && (
-                      <button
-                        onClick={() => updateStatus(driver.id, "verified")}
-                        disabled={actionLoading === driver.id}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/20 text-green-400 border border-green-500/30 rounded-lg text-xs font-semibold hover:bg-green-500/30 disabled:opacity-50 transition-colors"
-                      >
-                        <CheckCircle className="w-3.5 h-3.5" />
-                        {actionLoading === driver.id ? "..." : "Approve"}
-                      </button>
-                    )}
-                    {driver.verification_status !== "rejected" && (
-                      <button
-                        onClick={() => updateStatus(driver.id, "rejected")}
-                        disabled={actionLoading === driver.id}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-xs font-semibold hover:bg-red-500/30 disabled:opacity-50 transition-colors"
-                      >
-                        <XCircle className="w-3.5 h-3.5" />
-                        {actionLoading === driver.id ? "..." : "Reject"}
-                      </button>
-                    )}
-                    {driver.verification_status !== "pending" && (
-                      <button
-                        onClick={() => updateStatus(driver.id, "verified")}
-                        disabled={driver.verification_status === "verified" || actionLoading === driver.id}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 rounded-lg text-xs font-semibold hover:bg-yellow-500/30 disabled:opacity-50 transition-colors"
-                      >
-                        <Clock className="w-3.5 h-3.5" />
-                        Reset
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+            {loading ? (
+              <div className="text-center py-16 text-gray-500">Loading drivers...</div>
+            ) : drivers.length === 0 ? (
+              <div className="text-center py-16 text-gray-500">
+                <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                <p>No {filter === "all" ? "" : filter} drivers found.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {drivers.map((driver) => (
+                  <motion.div
+                    key={driver.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-[#1a1a2e] border border-white/10 rounded-2xl p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="text-white font-bold truncate">
+                            {driver.first_name} {driver.last_name}
+                          </h3>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-semibold flex-shrink-0 ${
+                            driver.verification_status === "verified"
+                              ? "bg-green-400/20 text-green-400"
+                              : driver.verification_status === "rejected"
+                              ? "bg-red-400/20 text-red-400"
+                              : "bg-yellow-400/20 text-yellow-400"
+                          }`}>
+                            {driver.verification_status}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
+                          <Car className="w-3.5 h-3.5 flex-shrink-0" />
+                          <span className="truncate">{driver.plate_number} · {driver.vehicle_model} · {driver.vehicle_color}</span>
+                        </div>
+                        <p className="text-gray-500 text-xs">{driver.phone}</p>
+                        {driver.email && <p className="text-gray-500 text-xs">{driver.email}</p>}
+                        <p className="text-gray-600 text-xs mt-0.5">
+                          Applied: {new Date(driver.created_at).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })}
+                        </p>
+                        <div className="mt-3 space-y-1">
+                          <p className="text-gray-400 text-xs font-semibold mb-1">Documents:</p>
+                          {driver.license_url && (
+                            <div className="flex items-center gap-1.5">
+                              <FileText className="w-3 h-3 text-blue-400" />
+                              <span className="text-gray-300 text-xs">Driver's License</span>
+                              {driver.license_url.includes('placeholder') ? (
+                                <span className="text-gray-500 text-xs italic">(Not uploaded)</span>
+                              ) : (
+                                <button
+                                  onClick={() => window.open(driver.license_url, '_blank')}
+                                  className="text-blue-400 hover:text-blue-300 text-xs flex items-center gap-0.5"
+                                >
+                                  <Eye className="w-3 h-3" /> View
+                                </button>
+                              )}
+                            </div>
+                          )}
+                          {driver.nbi_clearance_url && (
+                            <div className="flex items-center gap-1.5">
+                              <FileText className="w-3 h-3 text-purple-400" />
+                              <span className="text-gray-300 text-xs">NBI Clearance</span>
+                              {driver.nbi_clearance_url.includes('placeholder') ? (
+                                <span className="text-gray-500 text-xs italic">(Not uploaded)</span>
+                              ) : (
+                                <button
+                                  onClick={() => window.open(driver.nbi_clearance_url, '_blank')}
+                                  className="text-blue-400 hover:text-blue-300 text-xs flex items-center gap-0.5"
+                                >
+                                  <Eye className="w-3 h-3" /> View
+                                </button>
+                              )}
+                            </div>
+                          )}
+                          {driver.barangay_clearance_url && (
+                            <div className="flex items-center gap-1.5">
+                              <FileText className="w-3 h-3 text-green-400" />
+                              <span className="text-gray-300 text-xs">Barangay Clearance</span>
+                              {driver.barangay_clearance_url.includes('placeholder') ? (
+                                <span className="text-gray-500 text-xs italic">(Not uploaded)</span>
+                              ) : (
+                                <button
+                                  onClick={() => window.open(driver.barangay_clearance_url, '_blank')}
+                                  className="text-blue-400 hover:text-blue-300 text-xs flex items-center gap-0.5"
+                                >
+                                  <Eye className="w-3 h-3" /> View
+                                </button>
+                              )}
+                            </div>
+                          )}
+                          {driver.medical_certificate_url && (
+                            <div className="flex items-center gap-1.5">
+                              <FileText className="w-3 h-3 text-red-400" />
+                              <span className="text-gray-300 text-xs">Medical Certificate</span>
+                              {driver.medical_certificate_url.includes('placeholder') ? (
+                                <span className="text-gray-500 text-xs italic">(Not uploaded)</span>
+                              ) : (
+                                <button
+                                  onClick={() => window.open(driver.medical_certificate_url, '_blank')}
+                                  className="text-blue-400 hover:text-blue-300 text-xs flex items-center gap-0.5"
+                                >
+                                  <Eye className="w-3 h-3" /> View
+                                </button>
+                              )}
+                            </div>
+                          )}
+                          {!driver.license_url && !driver.nbi_clearance_url && !driver.barangay_clearance_url && !driver.medical_certificate_url && (
+                            <div className="flex items-center gap-1.5">
+                              <AlertCircle className="w-3 h-3 text-yellow-400" />
+                              <span className="text-yellow-400 text-xs">No documents uploaded</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-2 flex-shrink-0">
+                        {driver.verification_status !== "verified" && (
+                          <button
+                            onClick={() => updateStatus(driver.id, "verified")}
+                            disabled={actionLoading === driver.id}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/20 text-green-400 border border-green-500/30 rounded-lg text-xs font-semibold hover:bg-green-500/30 disabled:opacity-50 transition-colors"
+                          >
+                            <CheckCircle className="w-3.5 h-3.5" />
+                            {actionLoading === driver.id ? "..." : "Approve"}
+                          </button>
+                        )}
+                        {driver.verification_status !== "rejected" && (
+                          <button
+                            onClick={() => updateStatus(driver.id, "rejected")}
+                            disabled={actionLoading === driver.id}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-xs font-semibold hover:bg-red-500/30 disabled:opacity-50 transition-colors"
+                          >
+                            <XCircle className="w-3.5 h-3.5" />
+                            {actionLoading === driver.id ? "..." : "Reject"}
+                          </button>
+                        )}
+                        {driver.verification_status !== "pending" && (
+                          <button
+                            onClick={() => updateStatus(driver.id, "verified")}
+                            disabled={driver.verification_status === "verified" || actionLoading === driver.id}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 rounded-lg text-xs font-semibold hover:bg-yellow-500/30 disabled:opacity-50 transition-colors"
+                          >
+                            <Clock className="w-3.5 h-3.5" />
+                            Reset
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
