@@ -250,48 +250,64 @@ export function AdminPortal() {
                         <div className="flex items-center gap-1.5">
                           <FileText className="w-3 h-3 text-blue-400" />
                           <span className="text-gray-300 text-xs">Driver's License</span>
-                          <button
-                            onClick={() => window.open(driver.license_url, '_blank')}
-                            className="text-blue-400 hover:text-blue-300 text-xs flex items-center gap-0.5"
-                          >
-                            <Eye className="w-3 h-3" /> View
-                          </button>
+                          {driver.license_url.includes('placeholder') ? (
+                            <span className="text-gray-500 text-xs italic">(Not uploaded)</span>
+                          ) : (
+                            <button
+                              onClick={() => window.open(driver.license_url, '_blank')}
+                              className="text-blue-400 hover:text-blue-300 text-xs flex items-center gap-0.5"
+                            >
+                              <Eye className="w-3 h-3" /> View
+                            </button>
+                          )}
                         </div>
                       )}
                       {driver.nbi_clearance_url && (
                         <div className="flex items-center gap-1.5">
                           <FileText className="w-3 h-3 text-purple-400" />
                           <span className="text-gray-300 text-xs">NBI Clearance</span>
-                          <button
-                            onClick={() => window.open(driver.nbi_clearance_url, '_blank')}
-                            className="text-blue-400 hover:text-blue-300 text-xs flex items-center gap-0.5"
-                          >
-                            <Eye className="w-3 h-3" /> View
-                          </button>
+                          {driver.nbi_clearance_url.includes('placeholder') ? (
+                            <span className="text-gray-500 text-xs italic">(Not uploaded)</span>
+                          ) : (
+                            <button
+                              onClick={() => window.open(driver.nbi_clearance_url, '_blank')}
+                              className="text-blue-400 hover:text-blue-300 text-xs flex items-center gap-0.5"
+                            >
+                              <Eye className="w-3 h-3" /> View
+                            </button>
+                          )}
                         </div>
                       )}
                       {driver.barangay_clearance_url && (
                         <div className="flex items-center gap-1.5">
                           <FileText className="w-3 h-3 text-green-400" />
                           <span className="text-gray-300 text-xs">Barangay Clearance</span>
-                          <button
-                            onClick={() => window.open(driver.barangay_clearance_url, '_blank')}
-                            className="text-blue-400 hover:text-blue-300 text-xs flex items-center gap-0.5"
-                          >
-                            <Eye className="w-3 h-3" /> View
-                          </button>
+                          {driver.barangay_clearance_url.includes('placeholder') ? (
+                            <span className="text-gray-500 text-xs italic">(Not uploaded)</span>
+                          ) : (
+                            <button
+                              onClick={() => window.open(driver.barangay_clearance_url, '_blank')}
+                              className="text-blue-400 hover:text-blue-300 text-xs flex items-center gap-0.5"
+                            >
+                              <Eye className="w-3 h-3" /> View
+                            </button>
+                          )}
                         </div>
                       )}
                       {driver.medical_certificate_url && (
                         <div className="flex items-center gap-1.5">
                           <FileText className="w-3 h-3 text-red-400" />
                           <span className="text-gray-300 text-xs">Medical Certificate</span>
-                          <button
-                            onClick={() => window.open(driver.medical_certificate_url, '_blank')}
-                            className="text-blue-400 hover:text-blue-300 text-xs flex items-center gap-0.5"
-                          >
-                            <Eye className="w-3 h-3" /> View
-                          </button>
+                          {driver.medical_certificate_url.includes('placeholder') ? (
+                            <span className="text-gray-500 text-xs italic">(Not uploaded)</span>
+                          ) : (
+                            <button
+                              onClick={() => window.open(driver.medical_certificate_url, '_blank')}
+                              className="text-blue-400 hover:text-blue-300 text-xs flex items-center gap-0.5"
+                            >
+                              <Eye className="w-3 h-3" /> View
+                            </button>
+                          )}
                         </div>
                       )}
                       {!driver.license_url && !driver.nbi_clearance_url && !driver.barangay_clearance_url && !driver.medical_certificate_url && (
