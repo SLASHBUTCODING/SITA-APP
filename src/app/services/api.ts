@@ -247,7 +247,7 @@ export const authApi = {
 
       if (authError) {
         console.error('Supabase auth error:', authError);
-        if (authError.message.includes('already registered')) {
+        if (authError.message.includes('already registered') || authError.message.includes('User already registered')) {
           throw new Error('Email or phone number already registered. Please log in instead.');
         }
         throw new Error(authError.message);
