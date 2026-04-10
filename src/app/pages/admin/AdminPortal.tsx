@@ -19,7 +19,7 @@ interface Driver {
   nbi_clearance_url?: string;
   barangay_clearance_url?: string;
   medical_certificate_url?: string;
-  verification_status: "pending" | "verified" | "rejected";
+  verification_status: "pending" | "approved" | "rejected";
   created_at: string;
 }
 
@@ -41,7 +41,7 @@ export function AdminPortal() {
 
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState<"all" | "pending" | "verified" | "rejected">("pending");
+  const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected">("pending");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [selected, setSelected] = useState<Driver | null>(null);
   const [pricing, setPricing] = useState<PricingConfig>({
@@ -118,7 +118,7 @@ export function AdminPortal() {
     }
   }, [authed, filter]);
 
-  const updateStatus = async (driverId: string, status: "verified" | "rejected") => {
+  const updateStatus = async (driverId: string, status: "approved" | "rejected") => {
     setActionLoading(driverId);
     const { error } = await supabase
       .from("drivers")
@@ -136,7 +136,7 @@ export function AdminPortal() {
 
   const counts = {
     pending: drivers.filter((d) => d.verification_status === "pending").length,
-    verified: drivers.filter((d) => d.verification_status === "verified").length,
+    approved: drivers.filter((d) => d.verification_status === "approved").length,
     rejected: drivers.filter((d) => d.verification_status === "rejected").length,
   };
 
@@ -216,7 +216,7 @@ export function AdminPortal() {
         <div className="grid grid-cols-3 gap-3 mb-6">
           {[
             { label: "Pending", count: counts.pending, color: "text-yellow-400", bg: "bg-yellow-400/10", icon: Clock },
-            { label: "Verified", count: counts.verified, color: "text-green-400", bg: "bg-green-400/10", icon: CheckCircle },
+            { label: "Verified", count: counts.approved, color: "text-green-400", bg: "bg-green-400/10", icon: CheckCircle },
             { label: "Rejected", count: counts.rejected, color: "text-red-400", bg: "bg-red-400/10", icon: XCircle },
           ].map(({ label, count, color, bg, icon: Icon }) => (
             <div key={label} className={`${bg} border border-white/10 rounded-xl p-4 text-center`}>
@@ -315,7 +315,7 @@ export function AdminPortal() {
         {activeTab === "drivers" && (
           <div>
             <div className="flex gap-2 mb-4 flex-wrap">
-              {(["pending", "verified", "rejected", "all"] as const).map((f) => (
+              {(["pending", "approved", "rejected", "all"] as const).map((f) => (
                 <button
                   key={f}
                   onClick={() => setFilter(f)}
@@ -360,7 +360,7 @@ export function AdminPortal() {
                             {driver.first_name} {driver.last_name}
                           </h3>
                           <span className={`text-xs px-2 py-0.5 rounded-full font-semibold flex-shrink-0 ${
-                            driver.verification_status === "verified"
+                            driver.verification_status === "approved"
                               ? "bg-green-400/20 text-green-400"
                               : driver.verification_status === "rejected"
                               ? "bg-red-400/20 text-red-400"
@@ -453,9 +453,9 @@ export function AdminPortal() {
                         </div>
                       </div>
                       <div className="flex flex-col gap-2 flex-shrink-0">
-                        {driver.verification_status !== "verified" && (
+                        {driver.verification_status !== "approved" && (
                           <button
-                            onClick={() => updateStatus(driver.id, "verified")}
+                            onClick={() => updateStatus(driver.id, "approved")}
                             disabled={actionLoading === driver.id}
                             className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/20 text-green-400 border border-green-500/30 rounded-lg text-xs font-semibold hover:bg-green-500/30 disabled:opacity-50 transition-colors"
                           >
@@ -475,8 +475,8 @@ export function AdminPortal() {
                         )}
                         {driver.verification_status !== "pending" && (
                           <button
-                            onClick={() => updateStatus(driver.id, "verified")}
-                            disabled={driver.verification_status === "verified" || actionLoading === driver.id}
+                            onClick={() => updateStatus(driver.id, "approved")}
+                            disabled={driver.verification_status === "approved" || actionLoading === driver.id}
                             className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 rounded-lg text-xs font-semibold hover:bg-yellow-500/30 disabled:opacity-50 transition-colors"
                           >
                             <Clock className="w-3.5 h-3.5" />
