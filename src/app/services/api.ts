@@ -223,6 +223,14 @@ export const authApi = {
     try {
       const emailToUse = body.email || `${body.phone}@sita.local`;
 
+      // Validation
+      if (!emailToUse || !emailToUse.includes('@')) {
+        throw new Error('Invalid email address');
+      }
+      if (!body.password || body.password.length < 6) {
+        throw new Error('Password must be at least 6 characters');
+      }
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: emailToUse,
         password: body.password,
@@ -237,7 +245,13 @@ export const authApi = {
         }
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        console.error('Supabase auth error:', authError);
+        if (authError.message.includes('already registered')) {
+          throw new Error('Email or phone number already registered. Please log in instead.');
+        }
+        throw new Error(authError.message);
+      }
 
       // Create driver profile with pending verification - must be approved by Admin
       const { data: profileData, error: profileError } = await supabase
