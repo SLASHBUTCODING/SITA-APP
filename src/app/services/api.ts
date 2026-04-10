@@ -342,7 +342,7 @@ export const authApi = {
       const driver = profile || authData.user;
 
       // Block login if not yet verified by Admin
-      if (profile && profile.verification_status !== 'verified') {
+      if (profile && profile.verification_status !== 'approved') {
         await supabase.auth.signOut();
         if (profile.verification_status === 'rejected') {
           throw new Error('Your application was rejected. Please contact support.');
