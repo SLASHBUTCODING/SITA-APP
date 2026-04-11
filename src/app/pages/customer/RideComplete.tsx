@@ -100,7 +100,7 @@ export function CustomerComplete() {
                   <div className="text-center">
                     <Zap className="w-4 h-4 text-[#F47920] mx-auto mb-1" />
                     <p className="text-[10px] text-gray-400">Bayad</p>
-                    <p className="text-sm font-bold text-gray-700">₱ {rideData ? rideData.fare_amount.toFixed(0) : "--"}</p>
+                    <p className="text-sm font-bold text-gray-700">₱ {rideData ? (rideData.fare_amount ?? 0).toFixed(0) : "--"}</p>
                   </div>
                 </div>
                 <div className="bg-white rounded-xl p-3 flex items-center justify-between border border-gray-100">

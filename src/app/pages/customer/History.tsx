@@ -74,7 +74,7 @@ export function CustomerHistory() {
           <div className="w-px bg-white/20" />
           <div className="text-center">
             <p className="text-orange-100 text-[10px]">Kabuuang Gastos</p>
-            <p className="text-white font-black text-xl">₱ {totalSpent.toFixed(0)}</p>
+            <p className="text-white font-black text-xl">₱ {(totalSpent ?? 0).toFixed(0)}</p>
           </div>
           <div className="w-px bg-white/20" />
           <div className="text-center">
@@ -120,7 +120,7 @@ export function CustomerHistory() {
                     <p className="text-sm font-bold text-gray-800">
                       {trip.driver_first_name ? `${trip.driver_first_name} ${trip.driver_last_name}` : "Driver"}
                     </p>
-                    <p className="text-sm font-black text-gray-800">₱ {trip.fare_amount?.toFixed(0)}</p>
+                    <p className="text-sm font-black text-gray-800">₱ {(trip.fare_amount ?? 0).toFixed(0)}</p>
                   </div>
                   <div className="flex items-center justify-between mt-0.5">
                     <p className="text-xs text-gray-400 capitalize">{trip.status}</p>
@@ -158,7 +158,7 @@ export function CustomerHistory() {
                   </div>
                   <div className="text-center">
                     <p className="text-xs text-gray-400">Bayad</p>
-                    <p className="text-sm font-bold text-gray-700">₱ {trip.fare_amount?.toFixed(0)}</p>
+                    <p className="text-sm font-bold text-gray-700">₱ {(trip.fare_amount ?? 0).toFixed(0)}</p>
                   </div>
                   <div className="text-center">
                     <p className="text-xs text-gray-400">Status</p>

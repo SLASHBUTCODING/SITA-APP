@@ -180,7 +180,7 @@ export function CustomerRide() {
         <div className="flex items-center justify-between mb-4 px-1">
           <div>
             <p className="text-xs text-gray-400">Estimated Fare</p>
-            <p className="text-2xl font-black text-gray-800">₱ {rideData ? rideData.fare_amount.toFixed(2) : "--"}</p>
+            <p className="text-2xl font-black text-gray-800">₱ {rideData ? (rideData.fare_amount ?? 0).toFixed(2) : "--"}</p>
           </div>
           <div className="text-right">
             <p className="text-xs text-gray-400">ETA</p>

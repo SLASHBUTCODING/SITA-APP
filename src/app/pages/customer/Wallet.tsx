@@ -36,7 +36,7 @@ export function CustomerWallet() {
           <p className="text-white/80 text-sm mb-1">SITA Wallet</p>
           <div className="flex items-center gap-3">
             <h1 className="text-white font-bold text-3xl">
-              {showBalance ? `₱${walletBalance.toFixed(2)}` : "₱•••••"}
+              {showBalance ? `₱${(walletBalance ?? 0).toFixed(2)}` : "₱•••••"}
             </h1>
             <button
               onClick={() => setShowBalance(!showBalance)}

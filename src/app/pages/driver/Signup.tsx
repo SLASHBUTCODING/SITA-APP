@@ -313,7 +313,7 @@ export function DriverSignup() {
                         <CheckCircle className="w-8 h-8 text-green-500" />
                         <p className="text-xs font-semibold text-gray-800">{licenseFile.name}</p>
                         <p className="text-xs text-gray-500">
-                          {(licenseFile.size / 1024).toFixed(1)} KB
+                          {((licenseFile.size / 1024) ?? 0).toFixed(1)} KB
                         </p>
                         <button
                           type="button"
@@ -360,7 +360,7 @@ export function DriverSignup() {
                         <CheckCircle className="w-8 h-8 text-green-500" />
                         <p className="text-xs font-semibold text-gray-800">{nbiFile.name}</p>
                         <p className="text-xs text-gray-500">
-                          {(nbiFile.size / 1024).toFixed(1)} KB
+                          {((nbiFile.size / 1024) ?? 0).toFixed(1)} KB
                         </p>
                         <button
                           type="button"
@@ -407,7 +407,7 @@ export function DriverSignup() {
                         <CheckCircle className="w-8 h-8 text-green-500" />
                         <p className="text-xs font-semibold text-gray-800">{barangayFile.name}</p>
                         <p className="text-xs text-gray-500">
-                          {(barangayFile.size / 1024).toFixed(1)} KB
+                          {((barangayFile.size / 1024) ?? 0).toFixed(1)} KB
                         </p>
                         <button
                           type="button"
@@ -454,7 +454,7 @@ export function DriverSignup() {
                         <CheckCircle className="w-8 h-8 text-green-500" />
                         <p className="text-xs font-semibold text-gray-800">{medicalFile.name}</p>
                         <p className="text-xs text-gray-500">
-                          {(medicalFile.size / 1024).toFixed(1)} KB
+                          {((medicalFile.size / 1024) ?? 0).toFixed(1)} KB
                         </p>
                         <button
                           type="button"

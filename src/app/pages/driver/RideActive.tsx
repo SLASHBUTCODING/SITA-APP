@@ -225,7 +225,7 @@ export function DriverRideActive() {
         <div className="flex items-center justify-between mb-4 px-1">
           <div>
             <p className="text-xs text-gray-400">Kita Mo</p>
-            <p className="text-2xl font-black text-[#F47920]">₱ {rideData ? (rideData.fare_amount * 0.85).toFixed(2) : "--"}</p>
+            <p className="text-2xl font-black text-[#F47920]">₱ {rideData ? ((rideData.fare_amount ?? 0) * 0.85).toFixed(2) : "--"}</p>
           </div>
           <div className="text-right">
             <p className="text-xs text-gray-400">Distansya</p>

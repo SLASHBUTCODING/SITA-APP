@@ -31,8 +31,8 @@ export function CustomerProfile() {
 
   const STATS = [
     { icon: "�", label: "Total Trips", value: String(user?.total_rides ?? 0) },
-    { icon: "⭐", label: "Avg Rating", value: user?.average_rating ? user.average_rating.toFixed(1) : "--" },
-    { icon: "💰", label: "Wallet", value: user?.wallet_balance ? `₱${user.wallet_balance.toFixed(0)}` : "₱0" },
+    { icon: "⭐", label: "Avg Rating", value: user?.average_rating ? (user.average_rating ?? 0).toFixed(1) : "--" },
+    { icon: "💰", label: "Wallet", value: user?.wallet_balance ? `₱${(user.wallet_balance ?? 0).toFixed(0)}` : "₱0" },
   ];
 
   const handleLogout = () => {
@@ -57,7 +57,7 @@ export function CustomerProfile() {
             <p className="text-gray-400 text-xs">{user?.phone || "---"}</p>
             <div className="flex items-center gap-1 mt-1">
               <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-              <span className="text-white text-xs font-semibold">{user?.average_rating?.toFixed(1) || "--"}</span>
+              <span className="text-white text-xs font-semibold">{(user?.average_rating ?? 0).toFixed(1) || "--"}</span>
               <span className="text-gray-400 text-xs">· Verified Passenger</span>
             </div>
           </div>

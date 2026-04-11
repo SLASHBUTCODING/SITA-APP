@@ -44,7 +44,7 @@ export function DriverProfile() {
 
   const STATS = [
     { emoji: "😺", label: "Total Trips", value: driver?.total_rides ? driver.total_rides.toLocaleString() : "0" },
-    { emoji: "⭐", label: "Driver Rating", value: driver?.average_rating ? driver.average_rating.toFixed(1) : "--" },
+    { emoji: "⭐", label: "Driver Rating", value: driver?.average_rating ? (driver.average_rating ?? 0).toFixed(1) : "--" },
     { emoji: "💰", label: "Total Kita", value: driver?.total_earnings ? `₱${Math.floor(driver.total_earnings).toLocaleString()}` : "₱0" },
   ];
 
@@ -70,7 +70,7 @@ export function DriverProfile() {
             <p className="text-gray-400 text-xs">{driver?.phone || "---"}</p>
             <div className="flex items-center gap-1 mt-1">
               <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-              <span className="text-white text-xs font-semibold">{driver?.average_rating?.toFixed(1) || "--"}</span>
+              <span className="text-white text-xs font-semibold">{(driver?.average_rating ?? 0).toFixed(1) || "--"}</span>
               <span className="text-gray-400 text-xs">· {driver?.verification_status === "approved" ? "Verified Driver" : "Pending Verification"}</span>
             </div>
           </div>

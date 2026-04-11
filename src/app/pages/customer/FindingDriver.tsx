@@ -311,7 +311,7 @@ export function CustomerFinding() {
             <div className="bg-gray-50 rounded-2xl px-4 py-3 flex items-center justify-between mb-4">
               <div>
                 <p className="text-xs text-gray-400">Estimated Fare</p>
-                <p className="text-gray-800 font-bold text-xl">₱ {rideData ? rideData.fare_amount.toFixed(2) : "--"}</p>
+                <p className="text-gray-800 font-bold text-xl">₱ {rideData ? (rideData.fare_amount ?? 0).toFixed(2) : "--"}</p>
               </div>
               <div className="text-right">
                 <p className="text-xs text-gray-400">Distance</p>

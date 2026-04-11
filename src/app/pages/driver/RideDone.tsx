@@ -12,7 +12,7 @@ export function DriverRideDone() {
   const state = location.state as { rideId?: string; rideData?: RideData } | null;
   const rideData = state?.rideData;
   const driver = getStoredUser<DriverData>();
-  const driverPayout = rideData ? (rideData.fare_amount * 0.85).toFixed(2) : "--";
+  const driverPayout = rideData ? ((rideData.fare_amount ?? 0) * 0.85).toFixed(2) : "--";
   const displayName = driver ? driver.first_name : "Driver";
 
   return (

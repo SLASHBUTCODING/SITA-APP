@@ -297,10 +297,10 @@ export function DriverHome() {
             <p className="text-orange-100 text-xs font-semibold uppercase tracking-wide">Kita Ngayon</p>
             <TrendingUp className="w-4 h-4 text-orange-100" />
           </div>
-          <p className="text-white font-black text-3xl mb-1">₱ {earningsData.totalEarnings.toFixed(2)}</p>
+          <p className="text-white font-black text-3xl mb-1">₱ {(earningsData.totalEarnings ?? 0).toFixed(2)}</p>
           <p className="text-orange-200 text-xs">
             {earningsData.yesterdayEarnings > 0
-              ? `+₱${(earningsData.totalEarnings - earningsData.yesterdayEarnings).toFixed(2)} kumpara sa kahapon`
+              ? `+₱${((earningsData.totalEarnings ?? 0) - (earningsData.yesterdayEarnings ?? 0)).toFixed(2)} kumpara sa kahapon`
               : 'Walang data kahapon'}
           </p>
 
@@ -310,11 +310,11 @@ export function DriverHome() {
               <p className="text-orange-200 text-[10px]">Mga Biyahe</p>
             </div>
             <div className="flex-1 bg-white/20 rounded-xl p-2.5 text-center">
-              <p className="text-white font-bold text-base">{earningsData.totalDistance.toFixed(1)}</p>
+              <p className="text-white font-bold text-base">{(earningsData.totalDistance ?? 0).toFixed(1)}</p>
               <p className="text-orange-200 text-[10px]">Km Nasakay</p>
             </div>
             <div className="flex-1 bg-white/20 rounded-xl p-2.5 text-center">
-              <p className="text-white font-bold text-base">{earningsData.averageRating.toFixed(1)}★</p>
+              <p className="text-white font-bold text-base">{(earningsData.averageRating ?? 0).toFixed(1)}★</p>
               <p className="text-orange-200 text-[10px]">Avg Rating</p>
             </div>
           </div>
