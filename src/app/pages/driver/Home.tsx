@@ -26,6 +26,7 @@ export function DriverHome() {
   const [incomingRide, setIncomingRide] = useState<null | { pickupAddress: string; dropoffAddress: string }>(null);
   const [currentCoords, setCurrentCoords] = useState<{lat: number, lng: number} | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
+  const [earningsData, setEarningsData] = useState({ totalEarnings: 0, totalRides: 0, totalDistance: 0, averageRating: 5.0, yesterdayEarnings: 0 });
 
   const driver = getStoredUser<DriverData>();
   const displayName = driver ? `${driver.first_name} ${driver.last_name}` : "Driver";
@@ -33,20 +34,73 @@ export function DriverHome() {
 
   useEffect(() => {
     let stopTracking: (() => void) | null = null;
-    
+
     if (isOnline && driverId) {
       // Start continuous GPS updates to database
       stopTracking = startDriverLocationUpdates(driverId, (lat, lng) => {
         setCurrentCoords({ lat, lng });
       });
     }
-    
+
     console.log('Listening for ride requests...');
-    
+
     return () => {
       if (stopTracking) stopTracking();
     };
   }, [isOnline, driverId]);
+
+  useEffect(() => {
+    if (!driverId) return;
+
+    const fetchEarnings = async () => {
+      try {
+        // Fetch driver's current stats
+        const { data: driverData } = await supabase
+          .from('drivers')
+          .select('total_earnings, total_rides, average_rating')
+          .eq('id', driverId)
+          .single();
+
+        // Fetch today's rides
+        const today = new Date().toISOString().split('T')[0];
+        const { data: todayRides } = await supabase
+          .from('rides')
+          .select('fare_amount, distance_km')
+          .eq('driver_id', driverId)
+          .eq('status', 'completed')
+          .gte('created_at', today);
+
+        // Fetch yesterday's earnings for comparison
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split('T')[0];
+        const { data: yesterdayRides } = await supabase
+          .from('rides')
+          .select('fare_amount')
+          .eq('driver_id', driverId)
+          .eq('status', 'completed')
+          .gte('created_at', yesterdayStr)
+          .lt('created_at', today);
+
+        const todayEarnings = todayRides?.reduce((sum, r) => sum + (r.fare_amount || 0), 0) || 0;
+        const yesterdayEarnings = yesterdayRides?.reduce((sum, r) => sum + (r.fare_amount || 0), 0) || 0;
+        const todayDistance = todayRides?.reduce((sum, r) => sum + (r.distance_km || 0), 0) || 0;
+        const todayRidesCount = todayRides?.length || 0;
+
+        setEarningsData({
+          totalEarnings: todayEarnings,
+          totalRides: todayRidesCount,
+          totalDistance: todayDistance,
+          averageRating: driverData?.average_rating || 5.0,
+          yesterdayEarnings: yesterdayEarnings
+        });
+      } catch (error) {
+        console.error('Failed to fetch earnings:', error);
+      }
+    };
+
+    fetchEarnings();
+  }, [driverId]);
 
   const handleToggleOnline = async () => {
     if (!driverId) return;
@@ -164,20 +218,24 @@ export function DriverHome() {
             <p className="text-orange-100 text-xs font-semibold uppercase tracking-wide">Kita Ngayon</p>
             <TrendingUp className="w-4 h-4 text-orange-100" />
           </div>
-          <p className="text-white font-black text-3xl mb-1">₱ 185.00</p>
-          <p className="text-orange-200 text-xs">+₱45 kumpara sa kahapon</p>
+          <p className="text-white font-black text-3xl mb-1">₱ {earningsData.totalEarnings.toFixed(2)}</p>
+          <p className="text-orange-200 text-xs">
+            {earningsData.yesterdayEarnings > 0
+              ? `+₱${(earningsData.totalEarnings - earningsData.yesterdayEarnings).toFixed(2)} kumpara sa kahapon`
+              : 'Walang data kahapon'}
+          </p>
 
           <div className="flex gap-3 mt-3">
             <div className="flex-1 bg-white/20 rounded-xl p-2.5 text-center">
-              <p className="text-white font-bold text-base">7</p>
+              <p className="text-white font-bold text-base">{earningsData.totalRides}</p>
               <p className="text-orange-200 text-[10px]">Mga Biyahe</p>
             </div>
             <div className="flex-1 bg-white/20 rounded-xl p-2.5 text-center">
-              <p className="text-white font-bold text-base">12.4</p>
+              <p className="text-white font-bold text-base">{earningsData.totalDistance.toFixed(1)}</p>
               <p className="text-orange-200 text-[10px]">Km Nasakay</p>
             </div>
             <div className="flex-1 bg-white/20 rounded-xl p-2.5 text-center">
-              <p className="text-white font-bold text-base">4.8★</p>
+              <p className="text-white font-bold text-base">{earningsData.averageRating.toFixed(1)}★</p>
               <p className="text-orange-200 text-[10px]">Avg Rating</p>
             </div>
           </div>
