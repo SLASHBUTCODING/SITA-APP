@@ -417,6 +417,9 @@ CREATE TRIGGER trg_rides_updated_at
 -- Note: This requires the supabase_realtime publication to exist (created by Supabase automatically)
 ALTER PUBLICATION supabase_realtime ADD TABLE rides;
 
+-- Enable Realtime for drivers table (allows customers to track driver location in real-time)
+ALTER PUBLICATION supabase_realtime ADD TABLE drivers;
+
 -- ============================================================
 -- DEFAULT ADMIN USER (change password immediately!)
 -- password: Admin@SITA2024

@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { motion } from "motion/react";
-import { MapPin, Phone, MessageCircle, Navigation, CheckCircle } from "lucide-react";
+import { MapPin, Phone, MessageCircle, Navigation, CheckCircle, Clock } from "lucide-react";
 import { SITAMap } from "../../components/SITAMap";
 import { startDriverLocationUpdates } from "../../../services/realtimeTracking";
 import { getStoredUser, ridesApi, type DriverData, type RideData } from "../../services/api";
 import { driverStartRide, driverCompleteRide } from "../../services/socket";
+import { getRoute, calculateETA, formatETAMinutes } from "../../../services/routing";
 
 const CUSTOMER_IMAGE =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23E5E7EB'/%3E%3Cpath d='M50 45c8.284 0 15-6.716 15-15s-6.716-15-15-15-15 6.716-15 15 6.716 15 15 15zM50 50c-16.569 0-30 10.745-30 24v6h60v-6c0-13.255-13.431-24-30-24z' fill='%239CA3AF'/%3E%3C/svg%3E";
@@ -46,6 +47,9 @@ export function DriverRideActive() {
   const [elapsed, setElapsed] = useState(0);
   const [rideData, setRideData] = useState<RideData | null>(null);
   const [driverCoords, setDriverCoords] = useState<[number, number] | undefined>();
+  const [routeCoords, setRouteCoords] = useState<Array<[number, number]>>([]);
+  const [etaMinutes, setEtaMinutes] = useState<number>(0);
+  const [routeDistance, setRouteDistance] = useState<number>(0);
 
   const driver = getStoredUser<DriverData>();
   const driverId = driver?.id;
@@ -55,6 +59,24 @@ export function DriverRideActive() {
       ridesApi.get(rideId).then((res: any) => setRideData(res.data)).catch(() => {});
     }
   }, [rideId]);
+
+  // Calculate route to customer pickup when driver location and ride data are available
+  useEffect(() => {
+    if (!driverCoords || !rideData || phase !== "heading_pickup") return;
+
+    const pickupLat = rideData.pickup_latitude;
+    const pickupLng = rideData.pickup_longitude;
+
+    if (!pickupLat || !pickupLng) return;
+
+    getRoute(driverCoords[0], driverCoords[1], pickupLat, pickupLng).then((route) => {
+      if (route) {
+        setRouteCoords(route.coordinates);
+        setRouteDistance(route.distanceKm);
+        setEtaMinutes(calculateETA(route.distanceKm));
+      }
+    });
+  }, [driverCoords, rideData, phase]);
 
   useEffect(() => {
     if (!driverId) return;
@@ -72,6 +94,10 @@ export function DriverRideActive() {
   const minutes = Math.floor(elapsed / 60);
   const seconds = elapsed % 60;
   const config = PHASE_CONFIG[phase];
+
+  // Get pickup location for map
+  const pickupLocation = rideData ? [rideData.pickup_latitude, rideData.pickup_longitude] as [number, number] : undefined;
+  const dropoffLocation = rideData ? [rideData.dropoff_latitude, rideData.dropoff_longitude] as [number, number] : undefined;
 
   const handleNext = async () => {
     if (phase === "heading_pickup") {
@@ -101,6 +127,9 @@ export function DriverRideActive() {
       <div className="flex-1 relative">
         <SITAMap
           driverLocation={driverCoords}
+          pickupLocation={pickupLocation}
+          dropoffLocation={dropoffLocation}
+          routeCoordinates={routeCoords}
           className="w-full h-full"
         />
 
@@ -129,6 +158,17 @@ export function DriverRideActive() {
             {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
           </p>
         </div>
+
+        {/* ETA badge */}
+        {phase === "heading_pickup" && etaMinutes > 0 && (
+          <div className="absolute top-24 left-4 bg-[#F47920]/90 backdrop-blur-sm rounded-xl px-3 py-2 flex items-center gap-2">
+            <Clock className="w-4 h-4 text-white" />
+            <div>
+              <p className="text-[10px] text-white/80">ETA</p>
+              <p className="text-white font-bold text-sm">{formatETAMinutes(etaMinutes)}</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Driver bottom panel */}

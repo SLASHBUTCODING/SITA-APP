@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
-import { X, MapPin, ChevronLeft, Phone, MessageCircle } from "lucide-react";
+import { X, MapPin, ChevronLeft, Phone, MessageCircle, Clock } from "lucide-react";
 import { SITAMap } from "../../components/SITAMap";
 import { ridesApi, type RideData } from "../../services/api";
 import { supabase } from "../../../lib/supabase";
+import { getRoute, calculateETA, formatETAMinutes } from "../../../services/routing";
 
 const DRIVER_IMAGE =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23E5E7EB'/%3E%3Cpath d='M50 45c8.284 0 15-6.716 15-15s-6.716-15-15-15-15 6.716-15 15 6.716 15 15 15zM50 50c-16.569 0-30 10.745-30 24v6h60v-6c0-13.255-13.431-24-30-24z' fill='%239CA3AF'/%3E%3C/svg%3E";
@@ -21,6 +22,10 @@ export function CustomerFinding() {
   const [phase, setPhase] = useState<"searching" | "found">("searching");
   const [countdown, setCountdown] = useState(10);
   const [rideData, setRideData] = useState<RideData | null>(null);
+  const [driverLocation, setDriverLocation] = useState<[number, number] | undefined>();
+  const [routeCoords, setRouteCoords] = useState<Array<[number, number]>>([]);
+  const [etaMinutes, setEtaMinutes] = useState<number>(0);
+  const [customerLocation, setCustomerLocation] = useState<[number, number] | undefined>();
 
   useEffect(() => {
     if (!rideId) return;
@@ -46,10 +51,33 @@ export function CustomerFinding() {
               const res = await ridesApi.get(rideId);
               setRideData(res.data);
               setPhase("found");
+              
+              // Get customer's current GPS location
+              if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                  (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    setCustomerLocation([lat, lng]);
+                  },
+                  () => {
+                    // Fallback to pickup location from ride data
+                    if (res.data.pickup_latitude && res.data.pickup_longitude) {
+                      setCustomerLocation([res.data.pickup_latitude, res.data.pickup_longitude]);
+                    }
+                  }
+                );
+              }
             } catch (error) {
               console.error('Failed to fetch ride data:', error);
               setPhase("found");
             }
+          }
+          
+          // When driver arrives at pickup point
+          if (updatedRide.status === 'arrived') {
+            // Show arrival notification (could use toast/alert)
+            alert('Nakarating na ang iyong driver!');
           }
           
           // If ride is cancelled
@@ -81,6 +109,58 @@ export function CustomerFinding() {
     return () => clearInterval(t);
   }, [phase, countdown]);
 
+  // Subscribe to driver location updates when driver accepts
+  useEffect(() => {
+    if (!rideData?.driver_id || phase !== "found") return;
+
+    const driverChannel = supabase
+      .channel(`driver_location_${rideData.driver_id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'drivers',
+          filter: `id=eq.${rideData.driver_id}`,
+        },
+        (payload) => {
+          const updatedDriver = payload.new as any;
+          if (updatedDriver.current_latitude && updatedDriver.current_longitude) {
+            setDriverLocation([updatedDriver.current_latitude, updatedDriver.current_longitude]);
+          }
+        }
+      )
+      .subscribe();
+
+    // Fetch initial driver location
+    supabase
+      .from('drivers')
+      .select('current_latitude, current_longitude')
+      .eq('id', rideData.driver_id)
+      .single()
+      .then(({ data, error }) => {
+        if (data && data.current_latitude && data.current_longitude) {
+          setDriverLocation([data.current_latitude, data.current_longitude]);
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(driverChannel);
+    };
+  }, [rideData?.driver_id, phase]);
+
+  // Calculate route from driver to customer when both locations are available
+  useEffect(() => {
+    if (!driverLocation || !customerLocation || phase !== "found") return;
+
+    getRoute(driverLocation[0], driverLocation[1], customerLocation[0], customerLocation[1]).then((route) => {
+      if (route) {
+        setRouteCoords(route.coordinates);
+        setEtaMinutes(calculateETA(route.distanceKm));
+      }
+    });
+  }, [driverLocation, customerLocation, phase]);
+
   const handleCancel = async () => {
     if (rideId) {
       try {
@@ -93,13 +173,30 @@ export function CustomerFinding() {
   return (
     <div className="relative h-full w-full bg-white flex flex-col overflow-hidden">
       <div className="flex-1 relative">
-        <SITAMap className="w-full h-full" />
+        <SITAMap
+          customerLocation={customerLocation}
+          driverLocation={driverLocation}
+          pickupLocation={customerLocation}
+          routeCoordinates={routeCoords}
+          className="w-full h-full"
+        />
         <button
           onClick={() => navigate("/customer/home")}
           className="absolute top-12 left-4 w-9 h-9 bg-white rounded-full shadow-md flex items-center justify-center z-10"
         >
           <ChevronLeft className="w-4 h-4 text-gray-700" />
         </button>
+
+        {/* ETA badge */}
+        {phase === "found" && etaMinutes > 0 && (
+          <div className="absolute top-24 left-4 bg-[#F47920]/90 backdrop-blur-sm rounded-xl px-3 py-2 flex items-center gap-2 z-10">
+            <Clock className="w-4 h-4 text-white" />
+            <div>
+              <p className="text-[10px] text-white/80">ETA</p>
+              <p className="text-white font-bold text-sm">{formatETAMinutes(etaMinutes)}</p>
+            </div>
+          </div>
+        )}
 
         {phase === "searching" && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
