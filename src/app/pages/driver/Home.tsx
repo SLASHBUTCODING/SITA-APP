@@ -23,7 +23,7 @@ export function DriverHome() {
   const navigate = useNavigate();
   const [isOnline, setIsOnline] = useState(false);
   const [tipIndex] = useState(0);
-  const [incomingRide, setIncomingRide] = useState<null | { pickupAddress: string; dropoffAddress: string }>(null);
+  const [incomingRide, setIncomingRide] = useState<null | { rideId: string; pickupAddress: string; dropoffAddress: string; fare?: number; distance?: number }>(null);
   const [currentCoords, setCurrentCoords] = useState<{lat: number, lng: number} | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const [earningsData, setEarningsData] = useState({ totalEarnings: 0, totalRides: 0, totalDistance: 0, averageRating: 5.0, yesterdayEarnings: 0 });
@@ -34,20 +34,49 @@ export function DriverHome() {
 
   useEffect(() => {
     let stopTracking: (() => void) | null = null;
-
-    if (isOnline && driverId) {
-      // Start continuous GPS updates to database
+    if (driverId && isOnline) {
       stopTracking = startDriverLocationUpdates(driverId, (lat, lng) => {
         setCurrentCoords({ lat, lng });
       });
     }
 
-    console.log('Listening for ride requests...');
-
     return () => {
       if (stopTracking) stopTracking();
     };
-  }, [isOnline, driverId]);
+  }, [driverId, isOnline]);
+
+  useEffect(() => {
+    if (!driverId || !isOnline) return;
+
+    const channel = supabase
+      .channel(`rides_${driverId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'rides',
+          filter: `driver_id=eq.${driverId}`,
+        },
+        (payload) => {
+          const newRide = payload.new as any;
+          if (newRide.status === 'pending') {
+            setIncomingRide({
+              rideId: newRide.id,
+              pickupAddress: newRide.pickup_address,
+              dropoffAddress: newRide.dropoff_address,
+              fare: newRide.fare_amount,
+              distance: newRide.distance_km,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [driverId, isOnline]);
 
   useEffect(() => {
     if (!driverId) return;
@@ -278,7 +307,7 @@ export function DriverHome() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             whileTap={{ scale: 0.97 }}
-            onClick={() => navigate("/driver/request")}
+            onClick={() => navigate("/driver/request", { state: { rideId: incomingRide.rideId, pickupAddress: incomingRide.pickupAddress, dropoffAddress: incomingRide.dropoffAddress, fare: incomingRide.fare, distance: incomingRide.distance } })}
             className="absolute bottom-3 left-3 right-3 bg-[#F47920] text-white py-3 rounded-xl font-bold text-sm shadow-lg flex items-center justify-center gap-2"
           >
             <span className="relative flex h-2.5 w-2.5">
