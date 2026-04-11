@@ -332,7 +332,6 @@ export function CustomerHome() {
       <div className="h-[42vh] flex-shrink-0 relative overflow-hidden">
         <SITAMap
           customerLocation={currentCoords ? [currentCoords.lat, currentCoords.lng] : undefined}
-          nearbyDrivers={nearbyDrivers}
           destinationLocation={destinationCoords ? [destinationCoords.lat, destinationCoords.lng] : undefined}
           routeCoordinates={routeCoords}
           zoom={15}
