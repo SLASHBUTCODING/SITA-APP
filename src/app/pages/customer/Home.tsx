@@ -289,6 +289,18 @@ export function CustomerHome() {
     if (!dropoff || booking) return;
     setBookError("");
 
+    // Check if user is logged in
+    if (!user?.id) {
+      setBookError("Please log in to book a ride.");
+      return;
+    }
+
+    // Validate customer ID format
+    if (user.id.length !== 36) {
+      setBookError("Invalid user session. Please log in again.");
+      return;
+    }
+
     // Get current location if not already set
     if (!currentCoords) {
       setLocationLoading(true);
@@ -310,7 +322,7 @@ export function CustomerHome() {
     setBooking(true);
     try {
       const res = await ridesApi.create({
-        customerId: user?.id,
+        customerId: user.id,
         pickupAddress: pickup,
         pickupLatitude: currentCoords?.lat || 14.5995,
         pickupLongitude: currentCoords?.lng || 120.9842,
