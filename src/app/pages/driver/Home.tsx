@@ -202,7 +202,7 @@ export function DriverHome() {
   };
 
   return (
-    <div className="relative h-screen w-full flex flex-col bg-[#1a1a2e] overflow-y-auto">
+    <div className="relative h-screen w-full flex flex-col bg-[#1a1a2e] overflow-hidden">
       {/* Top Header */}
       <div className="relative z-10 flex items-center justify-between px-4 pt-safe pb-3">
         <div className="flex items-center gap-3">
