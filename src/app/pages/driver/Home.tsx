@@ -54,12 +54,20 @@ export function DriverHome() {
 
     const fetchEarnings = async () => {
       try {
-        // Fetch driver's current stats
+        // Fetch driver's current stats and last known location
         const { data: driverData } = await supabase
           .from('drivers')
-          .select('total_earnings, total_rides, average_rating')
+          .select('total_earnings, total_rides, average_rating, current_latitude, current_longitude')
           .eq('id', driverId)
           .single();
+
+        // Set last known location if available
+        if (driverData?.current_latitude && driverData?.current_longitude) {
+          setCurrentCoords({
+            lat: driverData.current_latitude,
+            lng: driverData.current_longitude
+          });
+        }
 
         // Fetch today's rides
         const today = new Date().toISOString().split('T')[0];
