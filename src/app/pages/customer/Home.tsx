@@ -310,6 +310,7 @@ export function CustomerHome() {
     setBooking(true);
     try {
       const res = await ridesApi.create({
+        customerId: user?.id,
         pickupAddress: pickup,
         pickupLatitude: currentCoords?.lat || 14.5995,
         pickupLongitude: currentCoords?.lng || 120.9842,
