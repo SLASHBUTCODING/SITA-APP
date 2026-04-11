@@ -18,19 +18,37 @@ export function DriverRequest() {
 
   const [countdown, setCountdown] = useState(20);
   const [accepted, setAccepted] = useState(false);
+  const [currentCoords, setCurrentCoords] = useState<{lat: number, lng: number} | null>(null);
 
   const driver = getStoredUser<DriverData>();
   const driverId = driver?.id;
 
   useEffect(() => {
+    // Fetch driver's last known location from database
+    if (driverId) {
+      supabase
+        .from('drivers')
+        .select('current_latitude, current_longitude')
+        .eq('id', driverId)
+        .single()
+        .then(({ data, error }) => {
+          if (!error && data?.current_latitude && data?.current_longitude) {
+            setCurrentCoords({
+              lat: data.current_latitude,
+              lng: data.current_longitude
+            });
+          }
+        });
+    }
+
     // TODO: Implement proper Supabase Realtime subscriptions
     // For now, just log that we're listening for ride requests
     console.log('Listening for ride requests...');
-    
+
     return () => {
       // Cleanup when component unmounts
     };
-  }, [navigate]);
+  }, [driverId]);
 
   useEffect(() => {
     if (countdown <= 0) {
@@ -58,7 +76,10 @@ export function DriverRequest() {
     <div className="relative h-screen w-full bg-[#1a1a2e] flex flex-col overflow-hidden">
       {/* Map background */}
       <div className="flex-1 relative">
-        <SITAMap className="w-full h-full" />
+        <SITAMap
+          driverLocation={currentCoords ? [currentCoords.lat, currentCoords.lng] : undefined}
+          className="w-full h-full"
+        />
 
         {/* Timer ring overlay */}
         <div className="absolute top-10 left-0 right-0 flex justify-center pointer-events-none">
