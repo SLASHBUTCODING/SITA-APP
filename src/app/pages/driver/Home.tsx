@@ -93,19 +93,17 @@ export function DriverHome() {
           event: 'INSERT',
           schema: 'public',
           table: 'rides',
-          filter: `driver_id=eq.${driverId}`,
+          filter: `status=eq.requested`,
         },
         (payload) => {
           const newRide = payload.new as any;
-          if (newRide.status === 'pending') {
-            setIncomingRide({
-              rideId: newRide.id,
-              pickupAddress: newRide.pickup_address,
-              dropoffAddress: newRide.dropoff_address,
-              fare: newRide.fare_amount,
-              distance: newRide.distance_km,
-            });
-          }
+          setIncomingRide({
+            rideId: newRide.id,
+            pickupAddress: newRide.pickup_address,
+            dropoffAddress: newRide.dropoff_address,
+            fare: newRide.fare_amount,
+            distance: newRide.distance_km,
+          });
         }
       )
       .subscribe();

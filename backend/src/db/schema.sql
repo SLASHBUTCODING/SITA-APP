@@ -410,6 +410,14 @@ CREATE TRIGGER trg_rides_updated_at
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 -- ============================================================
+-- SUPABASE REALTIME PUBLICATION
+-- ============================================================
+
+-- Enable Realtime for rides table (allows drivers to receive new ride notifications)
+-- Note: This requires the supabase_realtime publication to exist (created by Supabase automatically)
+ALTER PUBLICATION supabase_realtime ADD TABLE rides;
+
+-- ============================================================
 -- DEFAULT ADMIN USER (change password immediately!)
 -- password: Admin@SITA2024
 -- ============================================================

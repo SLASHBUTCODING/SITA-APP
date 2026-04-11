@@ -92,7 +92,35 @@ export function customerRequestRide(data: {
     return Promise.reject(new Error('Invalid customer ID. Please log in again.'));
   }
 
-  // Create ride request
+  // Calculate distance using Haversine formula
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c; // Distance in kilometers
+  };
+
+  // Calculate estimated fare based on distance
+  const calculateFare = (distanceKm: number) => {
+    const baseFare = 40; // Base fare in PHP
+    const perKmRate = 15; // Rate per kilometer
+    return Math.round(baseFare + (distanceKm * perKmRate));
+  };
+
+  const distanceKm = calculateDistance(
+    data.pickupLatitude,
+    data.pickupLongitude,
+    data.dropoffLatitude,
+    data.dropoffLongitude
+  );
+  const fareAmount = calculateFare(distanceKm);
+
+  // Create ride request with distance and fare
   return supabase
     .from('rides')
     .insert([{
@@ -103,6 +131,8 @@ export function customerRequestRide(data: {
       dropoff_longitude: data.dropoffLongitude,
       pickup_address: data.pickupAddress,
       dropoff_address: data.dropoffAddress,
+      distance_km: distanceKm,
+      fare_amount: fareAmount,
       status: 'requested'
     }])
     .select()

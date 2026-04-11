@@ -25,19 +25,54 @@ export function CustomerFinding() {
   useEffect(() => {
     if (!rideId) return;
 
-    // TODO: Implement proper Supabase Realtime subscriptions
-    // For now, simulate finding a driver after 3 seconds
-    const timer = setTimeout(() => {
-      ridesApi.get(rideId).then((res: any) => {
-        setRideData(res.data);
-        setPhase("found");
-      }).catch(() => setPhase("found"));
-    }, 3000);
+    // Listen for ride status changes using Supabase Realtime
+    const channel = supabase
+      .channel(`ride_${rideId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'rides',
+          filter: `id=eq.${rideId}`,
+        },
+        async (payload) => {
+          const updatedRide = payload.new as any;
+          
+          // When driver accepts the ride
+          if (updatedRide.status === 'accepted') {
+            // Fetch complete ride data with driver details
+            try {
+              const res = await ridesApi.get(rideId);
+              setRideData(res.data);
+              setPhase("found");
+            } catch (error) {
+              console.error('Failed to fetch ride data:', error);
+              setPhase("found");
+            }
+          }
+          
+          // If ride is cancelled
+          if (updatedRide.status === 'cancelled') {
+            navigate("/customer/home");
+          }
+        }
+      )
+      .subscribe();
+
+    // Set a 60-second timeout
+    const timeout = setTimeout(() => {
+      if (phase === "searching") {
+        // No driver accepted within 60 seconds
+        handleCancel();
+      }
+    }, 60000);
 
     return () => {
-      clearTimeout(timer);
+      supabase.removeChannel(channel);
+      clearTimeout(timeout);
     };
-  }, [rideId]);
+  }, [rideId, phase]);
 
   useEffect(() => {
     if (phase !== "found") return;
