@@ -231,66 +231,91 @@ export function CustomerHome() {
     return Math.round(baseFare + (distanceKm * perKmRate));
   };
 
-  const getCurrentLocation = () => {
-    console.log('Getting current GPS location...');
-    if (!navigator.geolocation) {
-      setBookError("Location not supported on this device.");
-      return;
-    }
-
-    setLocationLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const coords = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        };
-        console.log('GPS location obtained:', coords);
-        setCurrentCoords(coords);
-        setPickup("Current Location (GPS)");
-        setLocationLoading(false);
-        
-        // Clear any previous destination when getting new location
-        setDropoff("");
-        setDestinationCoords(null);
-        setRouteCoords([]);
-        setEstimatedFare(0);
-        
-        // DO NOT open search modal when getting GPS
-        setSearchFocused(false);
-      },
-      (error) => {
-        console.error('GPS error:', error);
-        setLocationLoading(false);
-        // iOS/Android compatible error codes: 1=denied, 2=unavailable, 3=timeout
-        if (error.code === 1) {
-          setBookError("Location access denied. Please allow location in your phone settings.");
-        } else if (error.code === 2) {
-          setBookError("Location unavailable. Please check your GPS signal.");
-        } else {
-          setBookError("Location request timed out. Try again.");
-        }
-      },
-      {
-        enableHighAccuracy: false,
-        timeout: 15000,
-        maximumAge: 120000 // Accept 2min cached position for customer - saves data
+  const getCurrentLocation = (): Promise<{lat: number, lng: number} | null> => {
+    return new Promise((resolve) => {
+      console.log('Getting current GPS location...');
+      if (!navigator.geolocation) {
+        setBookError("Location not supported on this device.");
+        resolve(null);
+        return;
       }
-    );
+
+      setLocationLoading(true);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const coords = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          console.log('GPS location obtained:', coords);
+          setCurrentCoords(coords);
+          setPickup("Current Location (GPS)");
+          setLocationLoading(false);
+          
+          // Clear any previous destination when getting new location
+          setDropoff("");
+          setDestinationCoords(null);
+          setRouteCoords([]);
+          setEstimatedFare(0);
+          
+          // DO NOT open search modal when getting GPS
+          setSearchFocused(false);
+          
+          resolve(coords);
+        },
+        (error) => {
+          console.error('GPS error:', error);
+          setLocationLoading(false);
+          // iOS/Android compatible error codes: 1=denied, 2=unavailable, 3=timeout
+          if (error.code === 1) {
+            setBookError("Location access denied. Please allow location in your phone settings.");
+          } else if (error.code === 2) {
+            setBookError("Location unavailable. Please check your GPS signal.");
+          } else {
+            setBookError("Location request timed out. Try again.");
+          }
+          resolve(null);
+        },
+        {
+          enableHighAccuracy: false,
+          timeout: 15000,
+          maximumAge: 120000 // Accept 2min cached position for customer - saves data
+        }
+      );
+    });
   };
 
   const handleBookNow = async () => {
     if (!dropoff || booking) return;
     setBookError("");
+
+    // Get current location if not already set
+    if (!currentCoords) {
+      setLocationLoading(true);
+      try {
+        const coords = await getCurrentLocation();
+        if (!coords) {
+          setBookError("Unable to get your location. Please enable location services.");
+          return;
+        }
+        setCurrentCoords(coords);
+        setLocationLoading(false);
+      } catch (err) {
+        setLocationLoading(false);
+        setBookError("Unable to get your location. Please enable location services.");
+        return;
+      }
+    }
+
     setBooking(true);
     try {
       const res = await ridesApi.create({
         pickupAddress: pickup,
-        pickupLatitude: 14.5995,
-        pickupLongitude: 120.9842,
+        pickupLatitude: currentCoords?.lat || 14.5995,
+        pickupLongitude: currentCoords?.lng || 120.9842,
         dropoffAddress: dropoff,
-        dropoffLatitude: 14.6010,
-        dropoffLongitude: 120.9870,
+        dropoffLatitude: destinationCoords?.lat || 14.6010,
+        dropoffLongitude: destinationCoords?.lng || 120.9870,
         paymentMethod: "cash",
       });
       const ride = (res as any)?.data as RideData;
