@@ -325,8 +325,8 @@ export function SITAMap({
   return (
     <div
       ref={mapContainerRef}
-      className={`w-full h-full ${className}`}
-      style={{ minHeight: "200px" }}
+      className={`w-full ${className}`}
+      style={{ height: "100%", minHeight: "300px" }}
     />
   );
 }
