@@ -6,7 +6,7 @@ import { SITAMap } from "../../components/SITAMap";
 import { startDriverLocationUpdates } from "../../../services/realtimeTracking";
 import { getStoredUser, ridesApi, type DriverData, type RideData } from "../../services/api";
 import { driverStartRide, driverCompleteRide } from "../../services/socket";
-import { getRoute, calculateETA, formatETAMinutes } from "../../../services/routing";
+import { getRoute, calculateETA, formatETAMinutes } from "../../services/routing";
 
 const CUSTOMER_IMAGE =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23E5E7EB'/%3E%3Cpath d='M50 45c8.284 0 15-6.716 15-15s-6.716-15-15-15-15 6.716-15 15 6.716 15 15 15zM50 50c-16.569 0-30 10.745-30 24v6h60v-6c0-13.255-13.431-24-30-24z' fill='%239CA3AF'/%3E%3C/svg%3E";
