@@ -39,6 +39,7 @@ export function DriverHome() {
         console.warn("Geolocation not supported");
         // Set fallback to Batangas, Philippines
         setCurrentCoords({ lat: 13.7565, lng: 121.0583 });
+        console.log('[DriverHome] Using fallback location (geolocation not supported): 13.7565, 121.0583');
         return;
       }
 
@@ -51,12 +52,14 @@ export function DriverHome() {
           };
           setCurrentCoords(coords);
           setLocationLoading(false);
+          console.log('[DriverHome] Initial GPS location on mount:', coords);
         },
         (error) => {
           console.error('GPS error:', error);
           // Set fallback to Batangas, Philippines on error
           setCurrentCoords({ lat: 13.7565, lng: 121.0583 });
           setLocationLoading(false);
+          console.log('[DriverHome] Using fallback location (GPS error): 13.7565, 121.0583');
         },
         {
           enableHighAccuracy: true,
@@ -182,14 +185,18 @@ export function DriverHome() {
       if (next) {
         // Get current location when going online
         const coords = await getCurrentLocation();
+        console.log('[DriverHome] GPS coordinates after going online:', coords);
         if (coords) {
           await driverGoOnline(driverId, coords.lat, coords.lng);
+          console.log('[DriverHome] Driver went online at:', coords);
         } else {
           // Fallback to default location
           await driverGoOnline(driverId, 14.5995, 120.9842);
+          console.log('[DriverHome] Using fallback location: 14.5995, 120.9842');
         }
       } else {
         await driverGoOffline(driverId);
+        console.log('[DriverHome] Driver went offline');
       }
     } catch {
       setIsOnline(!next);
@@ -320,6 +327,7 @@ export function DriverHome() {
           driverLocation={currentCoords ? [currentCoords.lat, currentCoords.lng] : undefined}
           className="w-full h-full"
         />
+        {console.log('[DriverHome] Passing driverLocation to SITAMap:', currentCoords ? [currentCoords.lat, currentCoords.lng] : undefined)}
 
         {isOnline && (
           <AnimatePresence>

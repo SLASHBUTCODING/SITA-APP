@@ -191,6 +191,7 @@ export function SITAMap({
     const map = mapRef.current;
 
     if (driverLocation) {
+      console.log('[SITAMap] Updating driver marker at:', driverLocation);
       if (markersRef.current["driver"]) {
         // Smoothly animate driver marker movement
         markersRef.current["driver"].setLatLng(driverLocation);
@@ -199,6 +200,8 @@ export function SITAMap({
           .addTo(map)
           .bindPopup("🛺 Driver");
       }
+      // Center map on driver location
+      map.setView(driverLocation, 15);
     } else {
       if (markersRef.current["driver"]) {
         markersRef.current["driver"].remove();
