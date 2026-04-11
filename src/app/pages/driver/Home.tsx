@@ -280,7 +280,7 @@ export function DriverHome() {
       </div>
 
       {/* Map */}
-      <div className="relative z-10 flex-1 mx-4 rounded-2xl overflow-hidden min-h-0">
+      <div className="relative z-10 flex-1 mx-4 rounded-2xl overflow-hidden min-h-[300px]">
         <SITAMap
           driverLocation={currentCoords ? [currentCoords.lat, currentCoords.lng] : undefined}
           className="w-full h-full"
