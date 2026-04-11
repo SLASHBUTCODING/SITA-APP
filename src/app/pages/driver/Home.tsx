@@ -32,6 +32,43 @@ export function DriverHome() {
   const displayName = driver ? `${driver.first_name} ${driver.last_name}` : "Driver";
   const driverId = driver?.id;
 
+  // Get GPS location immediately on mount
+  useEffect(() => {
+    const fetchInitialLocation = () => {
+      if (!navigator.geolocation) {
+        console.warn("Geolocation not supported");
+        // Set fallback to Masbate, Philippines
+        setCurrentCoords({ lat: 12.3686, lng: 123.6417 });
+        return;
+      }
+
+      setLocationLoading(true);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const coords = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          setCurrentCoords(coords);
+          setLocationLoading(false);
+        },
+        (error) => {
+          console.error('GPS error:', error);
+          // Set fallback to Masbate, Philippines on error
+          setCurrentCoords({ lat: 12.3686, lng: 123.6417 });
+          setLocationLoading(false);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 30000  // Accept 30s cached fix
+        }
+      );
+    };
+
+    fetchInitialLocation();
+  }, []);
+
   useEffect(() => {
     let stopTracking: (() => void) | null = null;
     if (driverId && isOnline) {

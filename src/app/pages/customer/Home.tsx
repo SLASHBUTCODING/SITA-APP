@@ -74,10 +74,45 @@ export function CustomerHome() {
       setNearbyDrivers(drivers);
       setNearbyCount(drivers.length);
     });
-    
-    // Don't get location automatically - wait for user to click
-    // getCurrentLocation();
-    
+
+    // Get GPS location immediately on mount
+    const fetchInitialLocation = () => {
+      if (!navigator.geolocation) {
+        console.warn("Geolocation not supported");
+        // Set fallback to Masbate, Philippines
+        setCurrentCoords({ lat: 12.3686, lng: 123.6417 });
+        setPickup("Masbate, Philippines");
+        return;
+      }
+
+      setLocationLoading(true);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const coords = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          setCurrentCoords(coords);
+          setPickup("Current Location (GPS)");
+          setLocationLoading(false);
+        },
+        (error) => {
+          console.error('GPS error:', error);
+          // Set fallback to Masbate, Philippines on error
+          setCurrentCoords({ lat: 12.3686, lng: 123.6417 });
+          setPickup("Masbate, Philippines");
+          setLocationLoading(false);
+        },
+        {
+          enableHighAccuracy: false,
+          timeout: 15000,
+          maximumAge: 120000  // Accept 2min cached position for customer
+        }
+      );
+    };
+
+    fetchInitialLocation();
+
     return cleanup;
   }, []);
 
