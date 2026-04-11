@@ -122,8 +122,8 @@ export function SITAMap({
   const markersRef = useRef<{ [key: string]: L.Marker }>({});
   const routeRef = useRef<L.Polyline | null>(null);
 
-  // Default center: Use actual GPS location or Masbate, Philippines as fallback
-  const defaultCenter: [number, number] = customerLocation || center || driverLocation || [12.3686, 123.6417]; // Masbate, Philippines
+  // Default center: Use actual GPS location or Batangas, Philippines as fallback
+  const defaultCenter: [number, number] = customerLocation || center || driverLocation || [13.7565, 121.0583]; // Batangas, Philippines
 
   // Initialize map
   useEffect(() => {

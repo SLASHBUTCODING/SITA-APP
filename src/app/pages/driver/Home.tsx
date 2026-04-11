@@ -37,8 +37,8 @@ export function DriverHome() {
     const fetchInitialLocation = () => {
       if (!navigator.geolocation) {
         console.warn("Geolocation not supported");
-        // Set fallback to Masbate, Philippines
-        setCurrentCoords({ lat: 12.3686, lng: 123.6417 });
+        // Set fallback to Batangas, Philippines
+        setCurrentCoords({ lat: 13.7565, lng: 121.0583 });
         return;
       }
 
@@ -54,8 +54,8 @@ export function DriverHome() {
         },
         (error) => {
           console.error('GPS error:', error);
-          // Set fallback to Masbate, Philippines on error
-          setCurrentCoords({ lat: 12.3686, lng: 123.6417 });
+          // Set fallback to Batangas, Philippines on error
+          setCurrentCoords({ lat: 13.7565, lng: 121.0583 });
           setLocationLoading(false);
         },
         {
