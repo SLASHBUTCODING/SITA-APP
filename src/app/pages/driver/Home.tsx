@@ -88,6 +88,8 @@ export function DriverHome() {
   useEffect(() => {
     if (!driverId || !isOnline) return;
 
+    console.log('Setting up realtime subscription for rides...', { driverId, isOnline });
+
     const channel = supabase
       .channel(`rides_${driverId}`)
       .on(
@@ -99,7 +101,9 @@ export function DriverHome() {
           filter: `status=eq.requested`,
         },
         (payload) => {
+          console.log('Received new ride payload:', payload);
           const newRide = payload.new as any;
+          console.log('Setting incoming ride:', newRide);
           setIncomingRide({
             rideId: newRide.id,
             pickupAddress: newRide.pickup_address,
@@ -109,9 +113,12 @@ export function DriverHome() {
           });
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Subscription status:', status);
+      });
 
     return () => {
+      console.log('Cleaning up subscription');
       supabase.removeChannel(channel);
     };
   }, [driverId, isOnline]);
