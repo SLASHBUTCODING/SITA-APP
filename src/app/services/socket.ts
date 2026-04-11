@@ -86,6 +86,12 @@ export function customerRequestRide(data: {
   pickupAddress: string;
   dropoffAddress: string;
 }) {
+  // Validate customer ID
+  if (!data.customerId || data.customerId === 'temp-id' || data.customerId.length !== 36) {
+    console.error('Invalid customer ID:', data.customerId);
+    return Promise.reject(new Error('Invalid customer ID. Please log in again.'));
+  }
+
   // Create ride request
   return supabase
     .from('rides')
@@ -98,7 +104,9 @@ export function customerRequestRide(data: {
       pickup_address: data.pickupAddress,
       dropoff_address: data.dropoffAddress,
       status: 'requested'
-    }]);
+    }])
+    .select()
+    .single();
 }
 
 export function customerWatchDrivers() {
