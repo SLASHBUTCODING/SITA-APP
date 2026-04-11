@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router";
 import { motion } from "motion/react";
 import { MapPin, X, Check, Phone, Clock } from "lucide-react";
 import { SITAMap } from "../../components/SITAMap";
+import { startDriverLocationUpdates } from "../../../services/realtimeTracking";
 import { getStoredUser, ridesApi, type DriverData } from "../../services/api";
 import { driverAcceptRide } from "../../services/socket";
 import { supabase } from "../../../lib/supabase";
@@ -41,12 +42,20 @@ export function DriverRequest() {
         });
     }
 
+    // Start GPS tracking to get real-time location updates
+    let stopTracking: (() => void) | null = null;
+    if (driverId) {
+      stopTracking = startDriverLocationUpdates(driverId, (lat, lng) => {
+        setCurrentCoords({ lat, lng });
+      });
+    }
+
     // TODO: Implement proper Supabase Realtime subscriptions
     // For now, just log that we're listening for ride requests
     console.log('Listening for ride requests...');
 
     return () => {
-      // Cleanup when component unmounts
+      if (stopTracking) stopTracking();
     };
   }, [driverId]);
 
