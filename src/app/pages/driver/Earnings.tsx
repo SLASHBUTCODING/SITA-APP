@@ -33,6 +33,7 @@ const maxEarn = Math.max(...WEEKLY_SUMMARY.map((d) => d.earn));
 export function DriverEarnings() {
   const [activePeriod, setActivePeriod] = useState("Ngayon");
   const [todayRides, setTodayRides] = useState<RideData[]>([]);
+  const [weeklyData, setWeeklyData] = useState<Array<{day: string, trips: number, earn: number}>>([]);
   const [earningsSummary, setEarningsSummary] = useState<{
     today?: { total: number; trips: number };
     week?: { total: number; trips: number };
@@ -50,6 +51,7 @@ export function DriverEarnings() {
           .from('rides')
           .select('*')
           .eq('driver_id', driver.id)
+          .eq('status', 'completed')
           .order('created_at', { ascending: false });
 
         if (ridesError) {
@@ -62,10 +64,38 @@ export function DriverEarnings() {
         setTodayRides(todayTrips);
 
         const todayTotal = todayTrips.reduce((sum, trip) => sum + (trip.fare_amount || 0), 0);
+
+        // Calculate week data (last 7 days)
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        const weekTrips = rides?.filter(r => new Date(r.created_at) >= weekAgo) || [];
+        const weekTotal = weekTrips.reduce((sum, trip) => sum + (trip.fare_amount || 0), 0);
+
+        // Calculate daily breakdown for last 7 days
+        const days = ['Lun', 'Mar', 'Miy', 'Huw', 'Biy', 'Sab', 'Lin'];
+        const dailyBreakdown = days.map(day => {
+          const dayTrips = weekTrips.filter(r => {
+            const rideDate = new Date(r.created_at);
+            return days[rideDate.getDay()] === day;
+          });
+          return {
+            day,
+            trips: dayTrips.length,
+            earn: dayTrips.reduce((sum, trip) => sum + (trip.fare_amount || 0), 0)
+          };
+        });
+        setWeeklyData(dailyBreakdown);
+
+        // Calculate month data (last 30 days)
+        const monthAgo = new Date();
+        monthAgo.setDate(monthAgo.getDate() - 30);
+        const monthTrips = rides?.filter(r => new Date(r.created_at) >= monthAgo) || [];
+        const monthTotal = monthTrips.reduce((sum, trip) => sum + (trip.fare_amount || 0), 0);
+
         setEarningsSummary({
           today: { total: todayTotal, trips: todayTrips.length },
-          week: { total: todayTotal * 7, trips: todayTrips.length * 7 },
-          month: { total: todayTotal * 30, trips: todayTrips.length * 30 }
+          week: { total: weekTotal, trips: weekTrips.length },
+          month: { total: monthTotal, trips: monthTrips.length }
         });
       } catch (error) {
         console.error('Error:', error);
@@ -75,12 +105,12 @@ export function DriverEarnings() {
     fetchDriverData();
   }, [driver?.id]);
 
-  const totalToday = earningsSummary.today?.total ?? DAILY_TRIPS.reduce((a, t) => a + t.fare, 0);
-  const totalTripsToday = earningsSummary.today?.trips ?? DAILY_TRIPS.length;
-  const totalWeek = earningsSummary.week?.total ?? WEEKLY_SUMMARY.reduce((a, d) => a + d.earn, 0);
-  const totalTripsWeek = earningsSummary.week?.trips ?? WEEKLY_SUMMARY.reduce((a, d) => a + d.trips, 0);
-  const totalMonth = earningsSummary.month?.total ?? 5840;
-  const totalTripsMonth = earningsSummary.month?.trips ?? 47;
+  const totalToday = earningsSummary.today?.total ?? 0;
+  const totalTripsToday = earningsSummary.today?.trips ?? 0;
+  const totalWeek = earningsSummary.week?.total ?? 0;
+  const totalTripsWeek = earningsSummary.week?.trips ?? 0;
+  const totalMonth = earningsSummary.month?.total ?? 0;
+  const totalTripsMonth = earningsSummary.month?.trips ?? 0;
 
   return (
     <div className="h-screen w-full flex flex-col bg-gray-50 overflow-hidden">
@@ -146,18 +176,25 @@ export function DriverEarnings() {
           <div className="bg-white rounded-2xl shadow-sm p-4">
             <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-4">Kita Araw-araw</p>
             <div className="flex items-end gap-2 h-20">
-              {WEEKLY_SUMMARY.map((d) => (
-                <div key={d.day} className="flex-1 flex flex-col items-center gap-1">
-                  <motion.div
-                    initial={{ height: 0 }}
-                    animate={{ height: `${(d.earn / maxEarn) * 72}px` }}
-                    transition={{ delay: 0.1, type: "spring" }}
-                    className="w-full rounded-t-lg"
-                    style={{ backgroundColor: d.day === "Sab" ? "#F47920" : "#F47920", opacity: d.day === "Sab" ? 1 : 0.4 }}
-                  />
-                  <p className="text-[9px] text-gray-400 font-medium">{d.day}</p>
-                </div>
-              ))}
+              {weeklyData.length > 0 ? (
+                weeklyData.map((d) => {
+                  const maxEarn = Math.max(...weeklyData.map((d) => d.earn)) || 1;
+                  return (
+                    <div key={d.day} className="flex-1 flex flex-col items-center gap-1">
+                      <motion.div
+                        initial={{ height: 0 }}
+                        animate={{ height: `${(d.earn / maxEarn) * 72}px` }}
+                        transition={{ delay: 0.1, type: "spring" }}
+                        className="w-full rounded-t-lg"
+                        style={{ backgroundColor: d.earn > 0 ? "#F47920" : "#F47920", opacity: d.earn > 0 ? 1 : 0.2 }}
+                      />
+                      <p className="text-[9px] text-gray-400 font-medium">{d.day}</p>
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="text-center text-gray-400 text-xs w-full py-4">Walang data</p>
+              )}
             </div>
           </div>
         </div>
@@ -167,32 +204,31 @@ export function DriverEarnings() {
       {activePeriod === "Ngayon" && (
         <div className="flex-1 overflow-auto px-5 pb-24">
           <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-3">Mga Biyahe Ngayon</p>
-          {DAILY_TRIPS.map((trip, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.04 }}
-              className="bg-white rounded-2xl shadow-sm mb-2.5 p-3.5 flex items-center gap-3"
-            >
-              <div className="w-10 h-10 bg-[#F47920]/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                <span className="text-lg">🛺</span>
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-gray-400">{trip.time} · {trip.km}</p>
-                  <p className="text-[#F47920] font-black text-sm">+₱{trip.fare}</p>
+          {todayRides.length === 0 ? (
+            <p className="text-center text-gray-400 text-sm py-8">Walang biyahe ngayon</p>
+          ) : (
+            todayRides.map((trip, i) => (
+              <motion.div
+                key={trip.id || i}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.04 }}
+                className="bg-white rounded-2xl shadow-sm mb-2.5 p-3.5 flex items-center gap-3"
+              >
+                <div className="w-10 h-10 bg-[#F47920]/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <span className="text-lg">🛺</span>
                 </div>
-                <p className="text-xs font-semibold text-gray-700 truncate">{trip.from} → {trip.to}</p>
-                <div className="flex items-center gap-1 mt-0.5">
-                  {[1, 2, 3, 4, 5].map((s) => (
-                    <span key={s} className={`text-[9px] ${s <= trip.rating ? "text-yellow-400" : "text-gray-200"}`}>★</span>
-                  ))}
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-gray-400">{new Date(trip.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} · {trip.distance_km || 0} km</p>
+                    <p className="text-[#F47920] font-black text-sm">+₱{trip.fare_amount || 0}</p>
+                  </div>
+                  <p className="text-xs font-semibold text-gray-700 truncate">{trip.pickup_address || "---"} → {trip.dropoff_address || "---"}</p>
                 </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-gray-300" />
-            </motion.div>
-          ))}
+                <ChevronRight className="w-4 h-4 text-gray-300" />
+              </motion.div>
+            ))
+          )}
         </div>
       )}
 
@@ -200,13 +236,13 @@ export function DriverEarnings() {
       {activePeriod === "Buwan" && (
         <div className="flex-1 overflow-auto px-5 pb-24">
           <div className="bg-white rounded-2xl shadow-sm p-4 mb-3">
-            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-3">Buwan ng Marso 2026</p>
+            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-3">Buwan ng {new Date().toLocaleString('fil-PH', { month: 'long', year: 'numeric' })}</p>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: "Kabuuang Kita", value: "₱ 5,840", color: "text-[#F47920]" },
-                { label: "Kabuuang Biyahe", value: "47", color: "text-gray-800" },
-                { label: "Pinakamataas na Araw", value: "₱ 320 (Sab)", color: "text-green-600" },
-                { label: "Avg Araw-araw", value: "₱ 187", color: "text-gray-800" },
+                { label: "Kabuuang Kita", value: `₱ ${totalMonth.toLocaleString()}`, color: "text-[#F47920]" },
+                { label: "Kabuuang Biyahe", value: totalTripsMonth.toString(), color: "text-gray-800" },
+                { label: "Avg Araw-araw", value: totalTripsMonth > 0 ? `₱ ${Math.round(totalMonth / 30)}` : "₱ 0", color: "text-gray-800" },
+                { label: "Avg per Biyahe", value: totalTripsMonth > 0 ? `₱ ${Math.round(totalMonth / totalTripsMonth)}` : "₱ 0", color: "text-gray-800" },
               ].map((s) => (
                 <div key={s.label} className="bg-gray-50 rounded-xl p-3">
                   <p className="text-[10px] text-gray-400 mb-1">{s.label}</p>
@@ -216,42 +252,51 @@ export function DriverEarnings() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-[#F47920] to-[#e06810] rounded-2xl p-4 flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-              <span className="text-xl">🏆</span>
+          {totalMonth > 0 && (
+            <div className="bg-gradient-to-r from-[#F47920] to-[#e06810] rounded-2xl p-4 flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                <span className="text-xl">🏆</span>
+              </div>
+              <div>
+                <p className="text-white font-bold text-sm">Magaling na Driver!</p>
+                <p className="text-orange-100 text-xs">Patuloy na maglingkod sa mga pasahero</p>
+              </div>
             </div>
-            <div>
-              <p className="text-white font-bold text-sm">Top Driver ngayong Buwan!</p>
-              <p className="text-orange-100 text-xs">Ikaw ay nasa Top 10% ng mga driver</p>
-            </div>
-          </div>
+          )}
         </div>
       )}
 
       {activePeriod === "Linggo" && (
         <div className="flex-1 overflow-auto px-5 pb-24">
-          {WEEKLY_SUMMARY.map((d, i) => (
-            <motion.div
-              key={d.day}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.05 }}
-              className="bg-white rounded-2xl shadow-sm mb-2.5 p-3.5 flex items-center gap-3"
-            >
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${d.day === "Sab" ? "bg-[#F47920]" : "bg-[#F47920]/10"}`}>
-                <p className={`text-xs font-bold ${d.day === "Sab" ? "text-white" : "text-[#F47920]"}`}>{d.day}</p>
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-bold text-gray-700">{d.trips} biyahe</p>
-                  <p className="text-[#F47920] font-black text-sm">₱ {d.earn}</p>
-                </div>
-                <div className="bg-gray-100 rounded-full h-1.5 mt-1.5">
-                  <div className="bg-[#F47920] h-1.5 rounded-full" style={{ width: `${(d.earn / maxEarn) * 100}%` }} />
-                </div>
-              </div>
-            </motion.div>
-          ))}
+          {weeklyData.length > 0 ? (
+            weeklyData.map((d, i) => {
+              const maxEarn = Math.max(...weeklyData.map((d) => d.earn)) || 1;
+              return (
+                <motion.div
+                  key={d.day}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  className="bg-white rounded-2xl shadow-sm mb-2.5 p-3.5 flex items-center gap-3"
+                >
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${d.earn > 0 ? "bg-[#F47920]" : "bg-[#F47920]/10"}`}>
+                    <p className={`text-xs font-bold ${d.earn > 0 ? "text-white" : "text-[#F47920]"}`}>{d.day}</p>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-bold text-gray-700">{d.trips} biyahe</p>
+                      <p className="text-[#F47920] font-black text-sm">₱ {d.earn}</p>
+                    </div>
+                    <div className="bg-gray-100 rounded-full h-1.5 mt-1.5">
+                      <div className="bg-[#F47920] h-1.5 rounded-full" style={{ width: `${(d.earn / maxEarn) * 100}%` }} />
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })
+          ) : (
+            <p className="text-center text-gray-400 text-sm py-8">Walang data</p>
+          )}
         </div>
       )}
 
