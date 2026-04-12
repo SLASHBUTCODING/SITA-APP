@@ -16,7 +16,7 @@ import { CustomerNotifications } from "./pages/customer/Notifications";
 import { CustomerPromos } from "./pages/customer/Promos";
 import { CustomerMessages } from "./pages/customer/Messages";
 import { DriverHome } from "./pages/driver/Home";
-import { DriverRequest } from "./pages/driver/IncomingRequest";
+import { DriverRequest } from "./pages/driver/Request";
 import { DriverRideActive } from "./pages/driver/RideActive";
 import { DriverRideDone } from "./pages/driver/RideDone";
 import { DriverProfile } from "./pages/driver/Profile";
