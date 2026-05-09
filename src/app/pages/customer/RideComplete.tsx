@@ -8,11 +8,11 @@ const DRIVER_IMAGE =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23E5E7EB'/%3E%3Cpath d='M50 45c8.284 0 15-6.716 15-15s-6.716-15-15-15-15 6.716-15 15 6.716 15 15 15zM50 50c-16.569 0-30 10.745-30 24v6h60v-6c0-13.255-13.431-24-30-24z' fill='%239CA3AF'/%3E%3C/svg%3E";
 
 const QUICK_TAGS = [
-  "Ligtas na Driver ðŸ›¡ï¸",
-  "Nasa Oras â°",
-  "Magalang ðŸ˜Š",
-  "Malinis ang Sasakyan ðŸ›º",
-  "Maalam sa Daan ðŸ—ºï¸",
+  "Ligtas na Driver 🛡️",
+  "Nasa Oras ⏰",
+  "Magalang 😊",
+  "Malinis ang Sasakyan 🛺",
+  "Maalam sa Daan 🗺️",
 ];
 
 export function CustomerComplete() {
@@ -100,13 +100,13 @@ export function CustomerComplete() {
                   <div className="text-center">
                     <Zap className="w-4 h-4 text-[#F47920] mx-auto mb-1" />
                     <p className="text-[10px] text-gray-400">Bayad</p>
-                    <p className="text-sm font-bold text-gray-700">â‚± {rideData ? (rideData.fare_amount ?? 0).toFixed(0) : "--"}</p>
+                    <p className="text-sm font-bold text-gray-700">₱ {rideData ? (rideData.fare_amount ?? 0).toFixed(0) : "--"}</p>
                   </div>
                 </div>
                 <div className="bg-white rounded-xl p-3 flex items-center justify-between border border-gray-100">
                   <p className="text-xs text-gray-500">Paraan ng Bayad</p>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-base">ðŸ’µ</span>
+                    <span className="text-base">💵</span>
                     <p className="text-xs font-bold text-gray-700">Cash</p>
                   </div>
                 </div>
@@ -119,11 +119,11 @@ export function CustomerComplete() {
                   <p className="text-sm font-bold text-gray-700">
                     {rideData ? `${rideData.driver_first_name} ${rideData.driver_last_name}` : "Driver"}
                   </p>
-                  <p className="text-xs text-gray-400">Tricycle Â· {rideData?.plate_number || "---"}</p>
+                  <p className="text-xs text-gray-400">Tricycle · {rideData?.plate_number || "---"}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-[10px] text-gray-400">Rating ng Driver</p>
-                  <p className="text-sm font-black text-[#F47920]">â˜… 4.8</p>
+                  <p className="text-sm font-black text-[#F47920]">★ 4.8</p>
                 </div>
               </div>
 
@@ -146,7 +146,7 @@ export function CustomerComplete() {
 
               {rating > 0 && (
                 <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center text-sm font-semibold text-[#F47920] mb-4">
-                  {["", "Mahirap ðŸ˜ž", "Pwede na ðŸ˜", "Okay ðŸ˜Š", "Maganda ðŸ˜„", "Napakagaling! ðŸ¤©"][rating]}
+                  {["", "Mahirap 😞", "Pwede na 😐", "Okay 😊", "Maganda 😄", "Napakagaling! 🤩"][rating]}
                 </motion.p>
               )}
 

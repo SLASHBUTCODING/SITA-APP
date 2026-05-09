@@ -49,7 +49,7 @@ export function CustomerSignup() {
         </button>
         <div className="text-center mt-6">
           <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-3">
-            <span className="text-3xl">ðŸ‘¤</span>
+            <span className="text-3xl">👤</span>
           </div>
           <h1 className="text-white font-bold text-2xl mb-1">Sumali sa SITA</h1>
           <p className="text-white/80 text-sm">Create your passenger account</p>
@@ -146,7 +146,7 @@ export function CustomerSignup() {
               <input
                 type={showPassword ? "text" : "password"}
                 required
-                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                placeholder="••••••••"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 className="w-full pl-11 pr-12 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F47920]/20 focus:border-[#F47920] text-gray-800"

@@ -41,7 +41,7 @@ export function DriverLogin() {
         </button>
         <div className="text-center mt-6">
           <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-3">
-            <span className="text-3xl">ðŸ›º</span>
+            <span className="text-3xl">🛺</span>
           </div>
           <h1 className="text-white font-bold text-2xl mb-1">Log in sa SITA</h1>
           <p className="text-white/80 text-sm">Welcome back, Driver!</p>
@@ -85,7 +85,7 @@ export function DriverLogin() {
               <input
                 type={showPassword ? "text" : "password"}
                 required
-                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                placeholder="••••••••"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 className="w-full pl-11 pr-12 py-3.5 bg-white/10 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F47920]/20 focus:border-[#F47920] text-white placeholder-white/50"

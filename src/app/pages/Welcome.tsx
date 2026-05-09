@@ -37,14 +37,14 @@ export function Welcome() {
         >
           <div className="flex items-center gap-2 mb-1">
             <div className="w-12 h-12 bg-[#F47920] rounded-2xl flex items-center justify-center shadow-lg shadow-orange-900/40">
-              <span className="text-2xl">ðŸ›º</span>
+              <span className="text-2xl">🛺</span>
             </div>
             <span className="text-white text-4xl font-black tracking-tight">
               SITA
             </span>
           </div>
           <span className="text-[#F47920] text-xs font-semibold tracking-widest uppercase">
-            Serbisyo Â· Integridad Â· Tiwala Â· Angkas
+            Serbisyo · Integridad · Tiwala · Angkas
           </span>
         </motion.div>
       </div>
@@ -92,7 +92,7 @@ export function Welcome() {
           {/* Passenger Section */}
           <div className="flex-1 bg-white/5 rounded-2xl p-3 border border-white/10">
             <div className="flex items-center gap-2 mb-3">
-              <span className="text-2xl">ðŸ‘¤</span>
+              <span className="text-2xl">👤</span>
               <span className="text-white font-semibold">Passenger</span>
             </div>
             <div className="space-y-2">
@@ -116,7 +116,7 @@ export function Welcome() {
           {/* Driver Section */}
           <div className="flex-1 bg-white/5 rounded-2xl p-3 border border-white/10">
             <div className="flex items-center gap-2 mb-3">
-              <span className="text-2xl">ðŸ›º</span>
+              <span className="text-2xl">🛺</span>
               <span className="text-white font-semibold">Driver</span>
             </div>
             <div className="space-y-2">

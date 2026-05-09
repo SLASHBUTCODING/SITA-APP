@@ -28,9 +28,9 @@ export function CustomerProfile() {
   const user = getStoredUser<UserData>();
 
   const STATS = [
-    { icon: "ï¿½", label: "Total Trips", value: String(user?.total_rides ?? 0) },
-    { icon: "â­", label: "Avg Rating", value: user?.average_rating ? (user.average_rating ?? 0).toFixed(1) : "--" },
-    { icon: "ðŸ’°", label: "Wallet", value: user?.wallet_balance ? `â‚±${(user.wallet_balance ?? 0).toFixed(0)}` : "â‚±0" },
+    { icon: "🛺", label: "Total Trips", value: String(user?.total_rides ?? 0) },
+    { icon: "⭐", label: "Avg Rating", value: user?.average_rating ? (user.average_rating ?? 0).toFixed(1) : "--" },
+    { icon: "💰", label: "Wallet", value: user?.wallet_balance ? `₱${(user.wallet_balance ?? 0).toFixed(0)}` : "₱0" },
   ];
 
   const handleLogout = () => {
@@ -47,7 +47,7 @@ export function CustomerProfile() {
           <div className="relative">
             <img src={avatarUrl(user ? `${user.first_name} ${user.last_name}` : "Pasahero", user?.profile_photo_url)} alt="User" className="w-16 h-16 rounded-full object-cover border-2 border-[#F47920]" />
             <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-[#F47920] rounded-full flex items-center justify-center border-2 border-white">
-              <span className="text-[8px] text-white font-bold">âœ“</span>
+              <span className="text-[8px] text-white font-bold">✓</span>
             </div>
           </div>
           <div className="flex-1">
@@ -56,7 +56,7 @@ export function CustomerProfile() {
             <div className="flex items-center gap-1 mt-1">
               <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
               <span className="text-white text-xs font-semibold">{(user?.average_rating ?? 0).toFixed(1) || "--"}</span>
-              <span className="text-gray-400 text-xs">Â· Verified Passenger</span>
+              <span className="text-gray-400 text-xs">· Verified Passenger</span>
             </div>
           </div>
           <button className="bg-[#F47920] text-white text-xs font-semibold px-3 py-1.5 rounded-full">Edit</button>
@@ -82,11 +82,11 @@ export function CustomerProfile() {
       <div className="px-5 mb-4">
         <div className="bg-gradient-to-r from-[#F47920] to-[#e06810] rounded-2xl p-4 flex items-center gap-3">
           <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-            <span className="text-xl">ðŸŽ</span>
+            <span className="text-xl">🎁</span>
           </div>
           <div className="flex-1">
             <p className="text-white font-bold text-sm">Mag-Refer, Mag-Earn!</p>
-            <p className="text-orange-100 text-xs">Kumita ng â‚±20 sa bawat kaibigan na mag-sign up</p>
+            <p className="text-orange-100 text-xs">Kumita ng ₱20 sa bawat kaibigan na mag-sign up</p>
           </div>
           <ChevronRight className="w-4 h-4 text-white" />
         </div>
@@ -130,7 +130,7 @@ export function CustomerProfile() {
           </button>
         </div>
 
-        <p className="text-center text-xs text-gray-300 mb-2">SITA v1.0.0 Â· Â© 2026</p>
+        <p className="text-center text-xs text-gray-300 mb-2">SITA v1.0.0 · © 2026</p>
       </div>
 
       <CustomerNav />

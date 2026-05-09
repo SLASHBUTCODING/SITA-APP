@@ -13,7 +13,7 @@ const DRIVER_IMAGE =
 const RIDE_STEPS = [
   "Driver paparating na sa pickup...",
   "Driver nakarating na sa inyong lugar",
-  "Sakay na! Papuntang destinasyon ðŸ›º",
+  "Sakay na! Papuntang destinasyon 🛺",
   "Malapit na sa destinasyon",
 ];
 
@@ -102,7 +102,7 @@ export function CustomerRide() {
         >
           <div className="bg-white/90 backdrop-blur-sm rounded-full px-3 py-1.5 flex items-center gap-2 shadow-md">
             <Shield className="w-3.5 h-3.5 text-green-500" />
-            <span className="text-xs font-semibold text-gray-700">Sakay Protektado Â· SITA Insured</span>
+            <span className="text-xs font-semibold text-gray-700">Sakay Protektado · SITA Insured</span>
           </div>
         </motion.div>
 
@@ -147,11 +147,11 @@ export function CustomerRide() {
             <p className="text-gray-800 font-bold text-sm">
               {rideData ? `${rideData.driver_first_name} ${rideData.driver_last_name}` : "Driver"}
             </p>
-            <p className="text-gray-400 text-xs">Tricycle Â· {rideData?.plate_number || "---"}</p>
+            <p className="text-gray-400 text-xs">Tricycle · {rideData?.plate_number || "---"}</p>
             <div className="flex items-center gap-1 mt-0.5">
-              <span className="text-yellow-400 text-xs">â˜…</span>
+              <span className="text-yellow-400 text-xs">★</span>
               <span className="text-gray-600 text-xs font-semibold">4.8</span>
-              <span className="text-gray-400 text-xs">Â· 1,204 trips</span>
+              <span className="text-gray-400 text-xs">· 1,204 trips</span>
             </div>
           </div>
           <div className="flex gap-2">
@@ -186,7 +186,7 @@ export function CustomerRide() {
         <div className="flex items-center justify-between mb-4 px-1">
           <div>
             <p className="text-xs text-gray-400">Estimated Fare</p>
-            <p className="text-2xl font-black text-gray-800">â‚± {rideData ? (rideData.fare_amount ?? 0).toFixed(2) : "--"}</p>
+            <p className="text-2xl font-black text-gray-800">₱ {rideData ? (rideData.fare_amount ?? 0).toFixed(2) : "--"}</p>
           </div>
           <div className="text-right">
             <p className="text-xs text-gray-400">ETA</p>
@@ -202,7 +202,7 @@ export function CustomerRide() {
             onClick={() => navigate("/customer/complete")}
             className="w-full bg-[#F47920] text-white py-4 rounded-2xl font-bold text-base shadow-lg shadow-orange-200"
           >
-            Nakarating Na â€” Tapusin ang Sakay
+            Nakarating Na — Tapusin ang Sakay
           </motion.button>
         ) : (
           <div className="flex gap-2">
@@ -255,7 +255,7 @@ export function CustomerRide() {
               {/* Cancellation Fee Info */}
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-6">
                 <p className="text-xs text-amber-800 font-semibold mb-1">Cancellation Fee</p>
-                <p className="text-2xl font-bold text-amber-900">â‚± 20.00</p>
+                <p className="text-2xl font-bold text-amber-900">₱ 20.00</p>
                 <p className="text-[10px] text-amber-700 mt-1">
                   Para sa abala ng driver at para protektado ang lahat
                 </p>

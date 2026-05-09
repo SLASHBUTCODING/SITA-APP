@@ -116,7 +116,7 @@ export function DriverRequest() {
     }
 
     if (!data || data.length === 0) {
-      setErrorMsg("Naunahan ka â€” kinuha na ng ibang driver.");
+      setErrorMsg("Naunahan ka — kinuha na ng ibang driver.");
       setTimeout(() => navigate("/driver/home"), 1500);
       return;
     }
@@ -190,7 +190,7 @@ export function DriverRequest() {
                 <Navigation className="w-4 h-4 text-[#F47920]" />
               </div>
               <p className="text-xs text-gray-400">Bayad</p>
-              <p className="text-sm font-bold text-gray-800">â‚±{rideData.fare ? rideData.fare.toFixed(0) : "--"}</p>
+              <p className="text-sm font-bold text-gray-800">₱{rideData.fare ? rideData.fare.toFixed(0) : "--"}</p>
             </div>
           </div>
         </div>
@@ -201,15 +201,15 @@ export function DriverRequest() {
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <p className="text-gray-500">Base fare</p>
-              <p className="text-gray-800">â‚±40.00</p>
+              <p className="text-gray-800">₱40.00</p>
             </div>
             <div className="flex justify-between text-sm">
               <p className="text-gray-500">Distance ({rideData.distance ? `${rideData.distance.toFixed(1)} km` : "--"})</p>
-              <p className="text-gray-800">â‚±{rideData.distance ? (rideData.distance * 15).toFixed(0) : "--"}</p>
+              <p className="text-gray-800">₱{rideData.distance ? (rideData.distance * 15).toFixed(0) : "--"}</p>
             </div>
             <div className="flex justify-between text-sm pt-2 border-t border-gray-100">
               <p className="font-bold text-gray-800">Kabuuan</p>
-              <p className="font-bold text-[#F47920] text-lg">â‚±{rideData.fare ? rideData.fare.toFixed(0) : "--"}</p>
+              <p className="font-bold text-[#F47920] text-lg">₱{rideData.fare ? rideData.fare.toFixed(0) : "--"}</p>
             </div>
           </div>
         </div>
