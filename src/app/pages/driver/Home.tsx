@@ -103,13 +103,15 @@ export function DriverHome() {
         (payload) => {
           console.log('Received new ride payload:', payload);
           const newRide = payload.new as any;
-          setIncomingRide({
+          const next = {
             rideId: newRide.id,
             pickupAddress: newRide.pickup_address,
             dropoffAddress: newRide.dropoff_address,
             fare: newRide.fare_amount,
             distance: newRide.distance_km,
-          });
+          };
+          console.log('[DriverHome] Setting incomingRide:', next);
+          setIncomingRide(next);
         }
       )
       // Clear the popup if the ride was accepted by another driver or cancelled
@@ -366,6 +368,7 @@ export function DriverHome() {
           </AnimatePresence>
         )}
 
+        {(() => { console.log('[DriverHome] render — isOnline:', isOnline, 'incomingRide:', incomingRide); return null; })()}
         {isOnline && incomingRide && (
           <motion.button
             initial={{ opacity: 0, y: 20 }}
