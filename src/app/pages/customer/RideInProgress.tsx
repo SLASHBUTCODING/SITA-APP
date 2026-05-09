@@ -57,15 +57,21 @@ export function CustomerRide() {
   useEffect(() => {
     if (!rideId) return;
 
-    // TODO: Implement proper Supabase Realtime subscriptions
-    // For now, just simulate ride progress
-    const timer = setTimeout(() => {
-      setStep(1); // Simulate driver arriving
-    }, 5000);
+    const stop = watchRideStatus(rideId, (status) => {
+      if (status === 'accepted' || status === 'searching') {
+        setStep(0);
+      } else if (status === 'arrived') {
+        setStep(1);
+      } else if (status === 'in_progress') {
+        setStep((s) => Math.max(s, 2));
+      } else if (status === 'completed') {
+        navigate('/customer/complete', { state: { rideId, rideData } });
+      } else if (status === 'cancelled') {
+        navigate('/customer/home');
+      }
+    });
 
-    return () => {
-      clearTimeout(timer);
-    };
+    return stop;
   }, [rideId, navigate, rideData]);
 
   useEffect(() => {

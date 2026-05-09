@@ -139,18 +139,6 @@ export function customerRequestRide(data: {
     .single();
 }
 
-export function customerWatchDrivers() {
-  // For now, just log that we're watching drivers
-  console.log('Watching for driver updates...');
-  // TODO: Implement Supabase Realtime subscriptions properly
-}
-
-export function customerWatchDriver(driverId: string) {
-  // For now, just log that we're watching a specific driver
-  console.log(`Watching driver ${driverId}...`);
-  // TODO: Implement Supabase Realtime subscriptions properly
-}
-
 export function customerLeaveRide(rideId: string) {
   // Unsubscribe from ride updates
   if (customerChannel) {

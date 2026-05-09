@@ -19,6 +19,7 @@ const _updateDriverLocation = async (
   lat: number,
   lng: number,
 ) => {
+  console.log('Updating driver location:', { driverId, lat, lng });
   const { error } = await supabase
     .from('drivers')
     .update({
@@ -28,7 +29,11 @@ const _updateDriverLocation = async (
     })
     .eq('id', driverId);
 
-  if (error) console.error('Error updating driver location:', error);
+  if (error) {
+    console.error('Error updating driver location:', error);
+  } else {
+    console.log('Driver location updated successfully');
+  }
   return !error;
 };
 
@@ -39,6 +44,7 @@ export function watchDriverLocation(
   driverId: string,
   onUpdate: (lat: number, lng: number) => void
 ) {
+  console.log('Watching driver location:', driverId);
   const channel = supabase
     .channel(`driver-location-${driverId}`)
     .on(
@@ -50,15 +56,20 @@ export function watchDriverLocation(
         filter: `id=eq.${driverId}`,
       },
       (payload: any) => {
+        console.log('Driver location update received:', payload);
         const driver = payload.new;
         if (driver.current_latitude && driver.current_longitude) {
+          console.log('Calling onUpdate with:', driver.current_latitude, driver.current_longitude);
           onUpdate(driver.current_latitude, driver.current_longitude);
         }
       }
     )
-    .subscribe();
+    .subscribe((status) => {
+      console.log('Subscription status:', status);
+    });
 
   return () => {
+    console.log('Unsubscribing from driver location');
     supabase.removeChannel(channel);
   };
 }

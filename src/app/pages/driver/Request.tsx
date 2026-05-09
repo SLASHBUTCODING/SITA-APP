@@ -2,44 +2,109 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import { MapPin, Clock, X, Navigation } from "lucide-react";
-import { driverAcceptRide } from "../../services/socket";
+import { getStoredUser, type DriverData } from "../../services/api";
+import { supabase } from "../../../lib/supabase";
 
 const DRIVER_IMAGE =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23E5E7EB'/%3E%3Cpath d='M50 45c8.284 0 15-6.716 15-15s-6.716-15-15-15-15 6.716-15 15 6.716 15 15 15zM50 50c-16.569 0-30 10.745-30 24v6h60v-6c0-13.255-13.431-24-30-24z' fill='%239CA3AF'/%3E%3C/svg%3E";
+
+type RideState = {
+  rideId: string;
+  pickupAddress: string;
+  dropoffAddress: string;
+  fare?: number;
+  distance?: number;
+};
 
 export function DriverRequest() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isAccepting, setIsAccepting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [rideData, setRideData] = useState<RideState | null>(
+    (location.state as RideState | null) ?? null
+  );
 
-  const rideData = location.state as {
-    rideId: string;
-    pickupAddress: string;
-    dropoffAddress: string;
-    fare?: number;
-    distance?: number;
-  } | null;
+  const driver = getStoredUser<DriverData>();
+  const driverId = driver?.id;
 
+  // Re-fetch the ride from Supabase if we landed here without state (e.g. hard refresh).
+  // Bounce home if rideId is missing entirely or the ride is no longer 'requested'.
   useEffect(() => {
-    if (!rideData) {
+    const stateRideId = (location.state as RideState | null)?.rideId;
+    if (!stateRideId) {
       navigate("/driver/home");
+      return;
     }
-  }, [rideData, navigate]);
+    if (rideData) return;
+
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("rides")
+        .select("id, pickup_address, dropoff_address, fare_amount, distance_km, status")
+        .eq("id", stateRideId)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (error || !data || data.status !== "requested") {
+        navigate("/driver/home");
+        return;
+      }
+
+      setRideData({
+        rideId: data.id,
+        pickupAddress: data.pickup_address,
+        dropoffAddress: data.dropoff_address,
+        fare: data.fare_amount ?? undefined,
+        distance: data.distance_km ?? undefined,
+      });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [location.state, navigate, rideData]);
 
   if (!rideData) return null;
 
   const handleAccept = async () => {
-    setIsAccepting(true);
-    try {
-      const driver = JSON.parse(localStorage.getItem('sita_driver') || '{}');
-      const driverId = driver.id;
-
-      await driverAcceptRide(driverId, rideData.rideId);
-      navigate("/driver/ride-active", { state: { rideId: rideData.rideId } });
-    } catch (error) {
-      console.error("Error accepting ride:", error);
-      setIsAccepting(false);
+    if (!driverId) {
+      setErrorMsg("Hindi ka naka-login bilang driver. Mag-login muli.");
+      return;
     }
+
+    setIsAccepting(true);
+    setErrorMsg(null);
+
+    // Optimistic concurrency: only one driver wins. Filter on status='requested'
+    // so a ride already accepted by someone else won't be overwritten.
+    const { data, error } = await supabase
+      .from("rides")
+      .update({
+        status: "accepted",
+        driver_id: driverId,
+        accepted_at: new Date().toISOString(),
+      })
+      .eq("id", rideData.rideId)
+      .eq("status", "requested")
+      .select("id");
+
+    if (error) {
+      console.error("Error accepting ride:", error);
+      setErrorMsg("May problema sa pagtanggap. Subukan muli.");
+      setIsAccepting(false);
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      setErrorMsg("Naunahan ka — kinuha na ng ibang driver.");
+      setTimeout(() => navigate("/driver/home"), 1500);
+      return;
+    }
+
+    navigate("/driver/active", { state: { rideId: rideData.rideId } });
   };
 
   const handleDecline = () => {
@@ -131,6 +196,19 @@ export function DriverRequest() {
             </div>
           </div>
         </div>
+
+        <AnimatePresence>
+          {errorMsg && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="mt-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700"
+            >
+              {errorMsg}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Action Buttons */}

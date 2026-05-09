@@ -103,7 +103,6 @@ export function DriverHome() {
         (payload) => {
           console.log('Received new ride payload:', payload);
           const newRide = payload.new as any;
-          console.log('Setting incoming ride:', newRide);
           setIncomingRide({
             rideId: newRide.id,
             pickupAddress: newRide.pickup_address,
@@ -113,12 +112,28 @@ export function DriverHome() {
           });
         }
       )
+      // Clear the popup if the ride was accepted by another driver or cancelled
+      // before this driver tapped through.
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'rides',
+        },
+        (payload) => {
+          const updated = payload.new as any;
+          setIncomingRide((current) => {
+            if (!current || current.rideId !== updated.id) return current;
+            return updated.status === 'requested' ? current : null;
+          });
+        }
+      )
       .subscribe((status) => {
         console.log('Subscription status:', status);
       });
 
     return () => {
-      console.log('Cleaning up subscription');
       supabase.removeChannel(channel);
     };
   }, [driverId, isOnline]);
@@ -334,7 +349,6 @@ export function DriverHome() {
           driverLocation={currentCoords ? [currentCoords.lat, currentCoords.lng] : undefined}
           className="w-full h-full"
         />
-        {console.log('[DriverHome] Passing driverLocation to SITAMap:', currentCoords ? [currentCoords.lat, currentCoords.lng] : undefined)}
 
         {isOnline && (
           <AnimatePresence>

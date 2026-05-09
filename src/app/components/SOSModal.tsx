@@ -6,12 +6,14 @@ interface SOSModalProps {
   onClose: () => void;
 }
 
+const EMERGENCY_NUMBER = "911";
+
 export function SOSModal({ onClose }: SOSModalProps) {
   const [isEmergencyCalled, setIsEmergencyCalled] = useState(false);
 
   const handleEmergencyCall = () => {
     setIsEmergencyCalled(true);
-    // TODO: Trigger emergency API call
+    window.location.href = `tel:${EMERGENCY_NUMBER}`;
     setTimeout(() => {
       onClose();
     }, 2000);
