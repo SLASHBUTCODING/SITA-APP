@@ -3,9 +3,7 @@ import { motion } from "motion/react";
 import { ChevronRight, Star, Shield, CreditCard, Bell, HelpCircle, LogOut, MapPin, Award } from "lucide-react";
 import { CustomerNav } from "../../components/CustomerNav";
 import { getStoredUser, clearAuth, type UserData } from "../../services/api";
-
-const USER_IMAGE =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23E5E7EB'/%3E%3Cpath d='M50 45c8.284 0 15-6.716 15-15s-6.716-15-15-15-15 6.716-15 15 6.716 15 15 15zM50 50c-16.569 0-30 10.745-30 24v6h60v-6c0-13.255-13.431-24-30-24z' fill='%239CA3AF'/%3E%3C/svg%3E";
+import { avatarUrl } from "../../lib/avatar";
 
 const MENU_SECTIONS = [
   {
@@ -30,9 +28,9 @@ export function CustomerProfile() {
   const user = getStoredUser<UserData>();
 
   const STATS = [
-    { icon: "�", label: "Total Trips", value: String(user?.total_rides ?? 0) },
-    { icon: "⭐", label: "Avg Rating", value: user?.average_rating ? (user.average_rating ?? 0).toFixed(1) : "--" },
-    { icon: "💰", label: "Wallet", value: user?.wallet_balance ? `₱${(user.wallet_balance ?? 0).toFixed(0)}` : "₱0" },
+    { icon: "ï¿½", label: "Total Trips", value: String(user?.total_rides ?? 0) },
+    { icon: "â­", label: "Avg Rating", value: user?.average_rating ? (user.average_rating ?? 0).toFixed(1) : "--" },
+    { icon: "ðŸ’°", label: "Wallet", value: user?.wallet_balance ? `â‚±${(user.wallet_balance ?? 0).toFixed(0)}` : "â‚±0" },
   ];
 
   const handleLogout = () => {
@@ -41,15 +39,15 @@ export function CustomerProfile() {
   };
 
   return (
-    <div className="h-screen w-full flex flex-col bg-gray-50 overflow-hidden">
+    <div className="min-h-dvh w-full flex flex-col bg-gray-50 overflow-hidden">
       {/* Header */}
       <div className="bg-gradient-to-b from-[#1a1a2e] to-[#2d2d4e] pt-12 pb-6 px-5">
         <h1 className="text-white font-bold text-lg mb-4">Aking Profile</h1>
         <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 flex items-center gap-4">
           <div className="relative">
-            <img src={USER_IMAGE} alt="User" className="w-16 h-16 rounded-full object-cover border-2 border-[#F47920]" />
+            <img src={avatarUrl(user ? `${user.first_name} ${user.last_name}` : "Pasahero", user?.profile_photo_url)} alt="User" className="w-16 h-16 rounded-full object-cover border-2 border-[#F47920]" />
             <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-[#F47920] rounded-full flex items-center justify-center border-2 border-white">
-              <span className="text-[8px] text-white font-bold">✓</span>
+              <span className="text-[8px] text-white font-bold">âœ“</span>
             </div>
           </div>
           <div className="flex-1">
@@ -58,7 +56,7 @@ export function CustomerProfile() {
             <div className="flex items-center gap-1 mt-1">
               <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
               <span className="text-white text-xs font-semibold">{(user?.average_rating ?? 0).toFixed(1) || "--"}</span>
-              <span className="text-gray-400 text-xs">· Verified Passenger</span>
+              <span className="text-gray-400 text-xs">Â· Verified Passenger</span>
             </div>
           </div>
           <button className="bg-[#F47920] text-white text-xs font-semibold px-3 py-1.5 rounded-full">Edit</button>
@@ -84,11 +82,11 @@ export function CustomerProfile() {
       <div className="px-5 mb-4">
         <div className="bg-gradient-to-r from-[#F47920] to-[#e06810] rounded-2xl p-4 flex items-center gap-3">
           <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-            <span className="text-xl">🎁</span>
+            <span className="text-xl">ðŸŽ</span>
           </div>
           <div className="flex-1">
             <p className="text-white font-bold text-sm">Mag-Refer, Mag-Earn!</p>
-            <p className="text-orange-100 text-xs">Kumita ng ₱20 sa bawat kaibigan na mag-sign up</p>
+            <p className="text-orange-100 text-xs">Kumita ng â‚±20 sa bawat kaibigan na mag-sign up</p>
           </div>
           <ChevronRight className="w-4 h-4 text-white" />
         </div>
@@ -132,7 +130,7 @@ export function CustomerProfile() {
           </button>
         </div>
 
-        <p className="text-center text-xs text-gray-300 mb-2">SITA v1.0.0 · © 2026</p>
+        <p className="text-center text-xs text-gray-300 mb-2">SITA v1.0.0 Â· Â© 2026</p>
       </div>
 
       <CustomerNav />

@@ -1,10 +1,10 @@
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { motion } from "motion/react";
 import { CheckCircle, TrendingUp, MapPin, Clock, Star } from "lucide-react";
 import { getStoredUser, type DriverData, type RideData } from "../../services/api";
-
-const CUSTOMER_IMAGE =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23E5E7EB'/%3E%3Cpath d='M50 45c8.284 0 15-6.716 15-15s-6.716-15-15-15-15 6.716-15 15 6.716 15 15 15zM50 50c-16.569 0-30 10.745-30 24v6h60v-6c0-13.255-13.431-24-30-24z' fill='%239CA3AF'/%3E%3C/svg%3E";
+import { avatarUrl } from "../../lib/avatar";
+import { supabase } from "../../../lib/supabase";
 
 export function DriverRideDone() {
   const navigate = useNavigate();
@@ -12,11 +12,37 @@ export function DriverRideDone() {
   const state = location.state as { rideId?: string; rideData?: RideData } | null;
   const rideData = state?.rideData;
   const driver = getStoredUser<DriverData>();
+  const driverId = driver?.id;
+
   const driverPayout = rideData ? ((rideData.fare_amount ?? 0) * 0.85).toFixed(2) : "--";
   const displayName = driver ? driver.first_name : "Driver";
+  const customerName = rideData ? `${rideData.customer_first_name ?? ""} ${rideData.customer_last_name ?? ""}`.trim() || "Pasahero" : "Pasahero";
+
+  const [todayTotal, setTodayTotal] = useState<number | null>(null);
+  const [todayCount, setTodayCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!driverId) return;
+    let cancelled = false;
+    (async () => {
+      const start = new Date(); start.setHours(0, 0, 0, 0);
+      const { data } = await supabase
+        .from("rides")
+        .select("fare_amount,completed_at")
+        .eq("driver_id", driverId)
+        .eq("status", "completed")
+        .gte("completed_at", start.toISOString());
+      if (cancelled) return;
+      const rows = (data ?? []) as { fare_amount: number }[];
+      const sum = rows.reduce((acc, r) => acc + ((Number(r.fare_amount) || 0) * 0.85), 0);
+      setTodayTotal(sum);
+      setTodayCount(rows.length);
+    })();
+    return () => { cancelled = true; };
+  }, [driverId]);
 
   return (
-    <div className="h-screen w-full bg-[#1a1a2e] flex flex-col overflow-hidden">
+    <div className="min-h-dvh w-full bg-[#1a1a2e] flex flex-col overflow-hidden">
       {/* Success header */}
       <div className="bg-gradient-to-b from-[#F47920] to-[#e06810] pt-12 pb-16 px-5 text-center relative">
         <motion.div
@@ -30,7 +56,7 @@ export function DriverRideDone() {
         <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-white font-black text-2xl mb-1">
           Tapos na ang Biyahe!
         </motion.h1>
-        <p className="text-orange-100 text-sm">Magandang trabaho, {displayName}! 👍</p>
+        <p className="text-orange-100 text-sm">Magandang trabaho, {displayName}! 👏</p>
       </div>
 
       <div className="flex-1 overflow-auto px-5 pt-12 pb-6">
@@ -66,12 +92,12 @@ export function DriverRideDone() {
             <div className="text-center border-x border-white/10">
               <Clock className="w-4 h-4 text-[#F47920] mx-auto mb-1" />
               <p className="text-[10px] text-gray-400">Tagal</p>
-              <p className="text-sm font-bold text-white">8 min</p>
+              <p className="text-sm font-bold text-white">--</p>
             </div>
             <div className="text-center">
               <Star className="w-4 h-4 text-yellow-400 mx-auto mb-1" />
               <p className="text-[10px] text-gray-400">Rating</p>
-              <p className="text-sm font-bold text-white">★ 5.0</p>
+              <p className="text-sm font-bold text-white">{driver?.average_rating ? `★ ${(driver.average_rating ?? 0).toFixed(1)}` : "--"}</p>
             </div>
           </div>
         </motion.div>
@@ -85,10 +111,10 @@ export function DriverRideDone() {
         >
           <p className="text-gray-400 text-xs font-semibold uppercase tracking-wide mb-3">Pasahero</p>
           <div className="flex items-center gap-3">
-            <img src={CUSTOMER_IMAGE} alt="Customer" className="w-12 h-12 rounded-full object-cover border-2 border-[#F47920]" />
+            <img src={avatarUrl(customerName)} alt="Customer" className="w-12 h-12 rounded-full object-cover border-2 border-[#F47920]" />
             <div className="flex-1">
-              <p className="text-sm font-bold text-white">{rideData ? `${rideData.customer_first_name} ${rideData.customer_last_name}` : "Pasahero"}</p>
-              <p className="text-gray-400 text-xs">★ 4.9 · Verified Passenger</p>
+              <p className="text-sm font-bold text-white">{customerName}</p>
+              <p className="text-gray-400 text-xs">Verified Passenger</p>
             </div>
             <div className="flex">
               {[1, 2, 3, 4, 5].map((s) => (
@@ -108,17 +134,19 @@ export function DriverRideDone() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-400 text-xs">Kabuuang Kita Ngayon</p>
-              <p className="text-white font-black text-2xl">₱ 220.00</p>
+              <p className="text-white font-black text-2xl">₱ {todayTotal != null ? todayTotal.toFixed(2) : "--"}</p>
             </div>
             <div className="text-right">
               <p className="text-gray-400 text-xs">Mga Biyahe Ngayon</p>
-              <p className="text-white font-bold text-xl">8</p>
+              <p className="text-white font-bold text-xl">{todayCount ?? "--"}</p>
             </div>
           </div>
-          <div className="bg-white/10 rounded-xl mt-3 px-3 py-2 flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-400 rounded-full" />
-            <p className="text-green-400 text-xs font-medium">+₱35 kita ngayong biyahe</p>
-          </div>
+          {rideData?.fare_amount != null && (
+            <div className="bg-white/10 rounded-xl mt-3 px-3 py-2 flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-400 rounded-full" />
+              <p className="text-green-400 text-xs font-medium">+₱{((rideData.fare_amount ?? 0) * 0.85).toFixed(2)} kita ngayong biyahe</p>
+            </div>
+          )}
         </motion.div>
 
         {/* Actions */}

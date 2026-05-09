@@ -4,9 +4,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { MapPin, Clock, X, Navigation } from "lucide-react";
 import { getStoredUser, type DriverData } from "../../services/api";
 import { supabase } from "../../../lib/supabase";
-
-const DRIVER_IMAGE =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23E5E7EB'/%3E%3Cpath d='M50 45c8.284 0 15-6.716 15-15s-6.716-15-15-15-15 6.716-15 15 6.716 15 15 15zM50 50c-16.569 0-30 10.745-30 24v6h60v-6c0-13.255-13.431-24-30-24z' fill='%239CA3AF'/%3E%3C/svg%3E";
+import { avatarUrl } from "../../lib/avatar";
 
 type RideState = {
   rideId: string;
@@ -14,6 +12,8 @@ type RideState = {
   dropoffAddress: string;
   fare?: number;
   distance?: number;
+  customerName?: string;
+  customerAvatarUrl?: string;
 };
 
 export function DriverRequest() {
@@ -42,7 +42,7 @@ export function DriverRequest() {
     (async () => {
       const { data, error } = await supabase
         .from("rides")
-        .select("id, pickup_address, dropoff_address, fare_amount, distance_km, status")
+        .select("id, pickup_address, dropoff_address, fare_amount, distance_km, status, customer_id")
         .eq("id", stateRideId)
         .maybeSingle();
 
@@ -53,12 +53,29 @@ export function DriverRequest() {
         return;
       }
 
+      let customerName: string | undefined;
+      let customerAvatarUrl: string | undefined;
+      if (data.customer_id) {
+        const { data: cust } = await supabase
+          .from("users")
+          .select("first_name,last_name,profile_photo_url")
+          .eq("id", data.customer_id)
+          .maybeSingle();
+        if (cust) {
+          customerName = `${cust.first_name ?? ""} ${cust.last_name ?? ""}`.trim() || undefined;
+          customerAvatarUrl = cust.profile_photo_url ?? undefined;
+        }
+      }
+
+      if (cancelled) return;
       setRideData({
         rideId: data.id,
         pickupAddress: data.pickup_address,
         dropoffAddress: data.dropoff_address,
         fare: data.fare_amount ?? undefined,
         distance: data.distance_km ?? undefined,
+        customerName,
+        customerAvatarUrl,
       });
     })();
 
@@ -99,7 +116,7 @@ export function DriverRequest() {
     }
 
     if (!data || data.length === 0) {
-      setErrorMsg("Naunahan ka — kinuha na ng ibang driver.");
+      setErrorMsg("Naunahan ka â€” kinuha na ng ibang driver.");
       setTimeout(() => navigate("/driver/home"), 1500);
       return;
     }
@@ -112,7 +129,7 @@ export function DriverRequest() {
   };
 
   return (
-    <div className="h-screen w-full flex flex-col bg-gray-50">
+    <div className="min-h-dvh w-full flex flex-col bg-gray-50">
       {/* Header */}
       <div className="bg-white px-4 py-3 flex items-center justify-between border-b border-gray-100">
         <button onClick={handleDecline} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center">
@@ -126,10 +143,10 @@ export function DriverRequest() {
       <div className="flex-1 overflow-y-auto px-4 py-4">
         {/* Customer Info */}
         <div className="bg-white rounded-2xl p-4 mb-4 flex items-center gap-3 shadow-sm">
-          <img src={DRIVER_IMAGE} alt="Customer" className="w-12 h-12 rounded-full object-cover" />
+          <img src={avatarUrl(rideData.customerName ?? "Pasahero", rideData.customerAvatarUrl)} alt="Customer" className="w-12 h-12 rounded-full object-cover" />
           <div className="flex-1">
-            <h2 className="text-base font-bold text-gray-800">Pasahero</h2>
-            <p className="text-xs text-gray-400">4.8 ★ · 12 na sakay</p>
+            <h2 className="text-base font-bold text-gray-800">{rideData.customerName ?? "Pasahero"}</h2>
+            <p className="text-xs text-gray-400">Verified Passenger</p>
           </div>
         </div>
 
@@ -166,14 +183,14 @@ export function DriverRequest() {
                 <Clock className="w-4 h-4 text-[#F47920]" />
               </div>
               <p className="text-xs text-gray-400">Est. Oras</p>
-              <p className="text-sm font-bold text-gray-800">~8 min</p>
+              <p className="text-sm font-bold text-gray-800">{rideData.distance ? `~${Math.max(2, Math.round(rideData.distance * 4))} min` : "--"}</p>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center gap-1 mb-1">
                 <Navigation className="w-4 h-4 text-[#F47920]" />
               </div>
               <p className="text-xs text-gray-400">Bayad</p>
-              <p className="text-sm font-bold text-gray-800">₱{rideData.fare ? rideData.fare.toFixed(0) : "--"}</p>
+              <p className="text-sm font-bold text-gray-800">â‚±{rideData.fare ? rideData.fare.toFixed(0) : "--"}</p>
             </div>
           </div>
         </div>
@@ -184,15 +201,15 @@ export function DriverRequest() {
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <p className="text-gray-500">Base fare</p>
-              <p className="text-gray-800">₱40.00</p>
+              <p className="text-gray-800">â‚±40.00</p>
             </div>
             <div className="flex justify-between text-sm">
               <p className="text-gray-500">Distance ({rideData.distance ? `${rideData.distance.toFixed(1)} km` : "--"})</p>
-              <p className="text-gray-800">₱{rideData.distance ? (rideData.distance * 15).toFixed(0) : "--"}</p>
+              <p className="text-gray-800">â‚±{rideData.distance ? (rideData.distance * 15).toFixed(0) : "--"}</p>
             </div>
             <div className="flex justify-between text-sm pt-2 border-t border-gray-100">
               <p className="font-bold text-gray-800">Kabuuan</p>
-              <p className="font-bold text-[#F47920] text-lg">₱{rideData.fare ? rideData.fare.toFixed(0) : "--"}</p>
+              <p className="font-bold text-[#F47920] text-lg">â‚±{rideData.fare ? rideData.fare.toFixed(0) : "--"}</p>
             </div>
           </div>
         </div>

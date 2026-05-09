@@ -2,8 +2,10 @@ import { useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { Shield, Clock, Star } from "lucide-react";
 
-const HERO_IMAGE =
-  "https://images.unsplash.com/photo-1728021535696-d61d997044d8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0cmljeWNsZSUyMHNpZGVjYXIlMjBwaGlsaXBwaW5lcyUyMHN0cmVldHxlbnwxfHx8fDE3NzQ1NzExNTd8MA&ixlib=rb-4.1.0&q=80&w=1080";
+// Hero is a CSS gradient — avoids depending on a third-party Unsplash URL that
+// can rot or be rate-limited. Drop a /public/welcome-hero.jpg in if you want
+// a real photograph.
+const HERO_IMAGE = "";
 
 const features = [
   { icon: Shield, text: "Safe & Registered" },
@@ -16,14 +18,14 @@ export function Welcome() {
 
   
   return (
-    <div className="relative h-screen w-full flex flex-col overflow-hidden bg-[#1a1a2e]">
+    <div className="relative min-h-dvh w-full flex flex-col overflow-hidden bg-[#1a1a2e]">
       {/* Hero Image */}
       <div className="relative flex-1 overflow-hidden">
-        <img
-          src={HERO_IMAGE}
-          alt="Tricycle"
-          className="w-full h-full object-cover opacity-50"
-        />
+        {HERO_IMAGE ? (
+          <img src={HERO_IMAGE} alt="Tricycle" className="w-full h-full object-cover opacity-50" />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-[#F47920]/40 via-[#1a1a2e] to-[#0f0f1f]" />
+        )}
         <div className="absolute inset-0 bg-gradient-to-b from-[#1a1a2e]/60 via-[#1a1a2e]/20 to-[#1a1a2e]" />
 
         {/* Logo */}
@@ -35,14 +37,14 @@ export function Welcome() {
         >
           <div className="flex items-center gap-2 mb-1">
             <div className="w-12 h-12 bg-[#F47920] rounded-2xl flex items-center justify-center shadow-lg shadow-orange-900/40">
-              <span className="text-2xl">🛺</span>
+              <span className="text-2xl">ðŸ›º</span>
             </div>
             <span className="text-white text-4xl font-black tracking-tight">
               SITA
             </span>
           </div>
           <span className="text-[#F47920] text-xs font-semibold tracking-widest uppercase">
-            Serbisyo · Integridad · Tiwala · Angkas
+            Serbisyo Â· Integridad Â· Tiwala Â· Angkas
           </span>
         </motion.div>
       </div>
@@ -90,7 +92,7 @@ export function Welcome() {
           {/* Passenger Section */}
           <div className="flex-1 bg-white/5 rounded-2xl p-3 border border-white/10">
             <div className="flex items-center gap-2 mb-3">
-              <span className="text-2xl">👤</span>
+              <span className="text-2xl">ðŸ‘¤</span>
               <span className="text-white font-semibold">Passenger</span>
             </div>
             <div className="space-y-2">
@@ -114,7 +116,7 @@ export function Welcome() {
           {/* Driver Section */}
           <div className="flex-1 bg-white/5 rounded-2xl p-3 border border-white/10">
             <div className="flex items-center gap-2 mb-3">
-              <span className="text-2xl">🛺</span>
+              <span className="text-2xl">ðŸ›º</span>
               <span className="text-white font-semibold">Driver</span>
             </div>
             <div className="space-y-2">

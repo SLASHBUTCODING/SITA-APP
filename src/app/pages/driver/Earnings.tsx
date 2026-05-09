@@ -7,29 +7,6 @@ import { supabase } from "../../../lib/supabase";
 
 const PERIODS = ["Ngayon", "Linggo", "Buwan"];
 
-const DAILY_TRIPS = [
-  { time: "9:14 AM", from: "San Jose, Purok 2", to: "Municipal Hall", fare: 35, km: "1.8 km", rating: 5 },
-  { time: "10:02 AM", from: "Palengke", to: "Brgy. Sta. Cruz", fare: 25, km: "1.2 km", rating: 5 },
-  { time: "11:30 AM", from: "Health Center", to: "Poblacion Church", fare: 20, km: "0.9 km", rating: 4 },
-  { time: "1:15 PM", from: "Elementary School", to: "San Roque", fare: 30, km: "1.5 km", rating: 5 },
-  { time: "2:40 PM", from: "Brgy. San Juan", to: "Palengke", fare: 25, km: "1.1 km", rating: 5 },
-  { time: "3:55 PM", from: "Municipal Hall", to: "Sta. Cruz Purok 4", fare: 30, km: "1.4 km", rating: 4 },
-  { time: "5:10 PM", from: "San Jose Market", to: "Covered Court", fare: 20, km: "0.8 km", rating: 5 },
-  { time: "6:20 PM", from: "Poblacion", to: "San Roque Purok 3", fare: 35, km: "1.7 km", rating: 5 },
-];
-
-const WEEKLY_SUMMARY = [
-  { day: "Lun", trips: 6, earn: 165 },
-  { day: "Mar", trips: 9, earn: 245 },
-  { day: "Miy", trips: 7, earn: 190 },
-  { day: "Huw", trips: 10, earn: 275 },
-  { day: "Biy", trips: 8, earn: 220 },
-  { day: "Sab", trips: 12, earn: 320 },
-  { day: "Lin", trips: 5, earn: 140 },
-];
-
-const maxEarn = Math.max(...WEEKLY_SUMMARY.map((d) => d.earn));
-
 export function DriverEarnings() {
   const [activePeriod, setActivePeriod] = useState("Ngayon");
   const [todayRides, setTodayRides] = useState<RideData[]>([]);
@@ -113,7 +90,7 @@ export function DriverEarnings() {
   const totalTripsMonth = earningsSummary.month?.trips ?? 0;
 
   return (
-    <div className="h-screen w-full flex flex-col bg-gray-50 overflow-hidden">
+    <div className="min-h-dvh w-full flex flex-col bg-gray-50 overflow-hidden">
       {/* Header */}
       <div className="bg-gradient-to-b from-[#1a1a2e] to-[#2d2d4e] pt-12 pb-6 px-5">
         <div className="flex items-center justify-between mb-4">
@@ -132,7 +109,7 @@ export function DriverEarnings() {
             </p>
           </div>
           <p className="text-white font-black text-4xl mb-1">
-            ₱ {activePeriod === "Ngayon" ? totalToday : activePeriod === "Linggo" ? totalWeek.toLocaleString() : totalMonth.toLocaleString()}
+            â‚± {activePeriod === "Ngayon" ? totalToday : activePeriod === "Linggo" ? totalWeek.toLocaleString() : totalMonth.toLocaleString()}
           </p>
           <div className="flex gap-4">
             <div>
@@ -144,7 +121,7 @@ export function DriverEarnings() {
             <div>
               <p className="text-orange-200 text-[10px]">Avg per Biyahe</p>
               <p className="text-white font-bold text-sm">
-                ₱ {activePeriod === "Ngayon" ? (totalTripsToday > 0 ? Math.round(totalToday / totalTripsToday) : 0) : activePeriod === "Linggo" ? (totalTripsWeek > 0 ? Math.round(totalWeek / totalTripsWeek) : 0) : (totalTripsMonth > 0 ? Math.round(totalMonth / totalTripsMonth) : 0)}
+                â‚± {activePeriod === "Ngayon" ? (totalTripsToday > 0 ? Math.round(totalToday / totalTripsToday) : 0) : activePeriod === "Linggo" ? (totalTripsWeek > 0 ? Math.round(totalWeek / totalTripsWeek) : 0) : (totalTripsMonth > 0 ? Math.round(totalMonth / totalTripsMonth) : 0)}
               </p>
             </div>
             <div>
@@ -216,14 +193,14 @@ export function DriverEarnings() {
                 className="bg-white rounded-2xl shadow-sm mb-2.5 p-3.5 flex items-center gap-3"
               >
                 <div className="w-10 h-10 bg-[#F47920]/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <span className="text-lg">🛺</span>
+                  <span className="text-lg">ðŸ›º</span>
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs text-gray-400">{new Date(trip.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} · {trip.distance_km || 0} km</p>
-                    <p className="text-[#F47920] font-black text-sm">+₱{trip.fare_amount || 0}</p>
+                    <p className="text-xs text-gray-400">{new Date(trip.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} Â· {trip.distance_km || 0} km</p>
+                    <p className="text-[#F47920] font-black text-sm">+â‚±{trip.fare_amount || 0}</p>
                   </div>
-                  <p className="text-xs font-semibold text-gray-700 truncate">{trip.pickup_address || "---"} → {trip.dropoff_address || "---"}</p>
+                  <p className="text-xs font-semibold text-gray-700 truncate">{trip.pickup_address || "---"} â†’ {trip.dropoff_address || "---"}</p>
                 </div>
                 <ChevronRight className="w-4 h-4 text-gray-300" />
               </motion.div>
@@ -239,10 +216,10 @@ export function DriverEarnings() {
             <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-3">Buwan ng {new Date().toLocaleString('fil-PH', { month: 'long', year: 'numeric' })}</p>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: "Kabuuang Kita", value: `₱ ${totalMonth.toLocaleString()}`, color: "text-[#F47920]" },
+                { label: "Kabuuang Kita", value: `â‚± ${totalMonth.toLocaleString()}`, color: "text-[#F47920]" },
                 { label: "Kabuuang Biyahe", value: totalTripsMonth.toString(), color: "text-gray-800" },
-                { label: "Avg Araw-araw", value: totalTripsMonth > 0 ? `₱ ${Math.round(totalMonth / 30)}` : "₱ 0", color: "text-gray-800" },
-                { label: "Avg per Biyahe", value: totalTripsMonth > 0 ? `₱ ${Math.round(totalMonth / totalTripsMonth)}` : "₱ 0", color: "text-gray-800" },
+                { label: "Avg Araw-araw", value: totalTripsMonth > 0 ? `â‚± ${Math.round(totalMonth / 30)}` : "â‚± 0", color: "text-gray-800" },
+                { label: "Avg per Biyahe", value: totalTripsMonth > 0 ? `â‚± ${Math.round(totalMonth / totalTripsMonth)}` : "â‚± 0", color: "text-gray-800" },
               ].map((s) => (
                 <div key={s.label} className="bg-gray-50 rounded-xl p-3">
                   <p className="text-[10px] text-gray-400 mb-1">{s.label}</p>
@@ -255,7 +232,7 @@ export function DriverEarnings() {
           {totalMonth > 0 && (
             <div className="bg-gradient-to-r from-[#F47920] to-[#e06810] rounded-2xl p-4 flex items-center gap-3">
               <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                <span className="text-xl">🏆</span>
+                <span className="text-xl">ðŸ†</span>
               </div>
               <div>
                 <p className="text-white font-bold text-sm">Magaling na Driver!</p>
@@ -285,7 +262,7 @@ export function DriverEarnings() {
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-bold text-gray-700">{d.trips} biyahe</p>
-                      <p className="text-[#F47920] font-black text-sm">₱ {d.earn}</p>
+                      <p className="text-[#F47920] font-black text-sm">â‚± {d.earn}</p>
                     </div>
                     <div className="bg-gray-100 rounded-full h-1.5 mt-1.5">
                       <div className="bg-[#F47920] h-1.5 rounded-full" style={{ width: `${(d.earn / maxEarn) * 100}%` }} />

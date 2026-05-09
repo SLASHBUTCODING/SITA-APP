@@ -79,7 +79,7 @@ export function CustomerHistory() {
           <div className="w-px bg-white/20" />
           <div className="text-center">
             <p className="text-orange-100 text-[10px]">Avg Rating</p>
-            <p className="text-white font-black text-xl">4.8 ★</p>
+            <p className="text-white font-black text-xl">{user?.average_rating ? `${(user.average_rating ?? 0).toFixed(1)} ★` : "-- ★"}</p>
           </div>
         </div>
 

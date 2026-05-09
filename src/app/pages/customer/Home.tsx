@@ -18,15 +18,6 @@ type PlaceKey = typeof PLACE_SLOTS[number]["key"];
 type SavedPlace = { address: string; lat?: number; lng?: number };
 type SavedPlaces = Partial<Record<PlaceKey, SavedPlace>>;
 
-const DEFAULT_MARKERS = [
-  { x: 50, y: 56, type: "pickup" as const },
-  { x: 32, y: 38, type: "driver" as const },
-  { x: 68, y: 74, type: "driver2" as const },
-  { x: 15, y: 56, type: "driver3" as const },
-];
-
-const CUSTOMER_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23E5E7EB'/%3E%3Cpath d='M50 45c8.284 0 15-6.716 15-15s-6.716-15-15-15-15 6.716-15 15 6.716 15 15 15zM50 50c-16.569 0-30 10.745-30 24v6h60v-6c0-13.255-13.431-24-30-24z' fill='%239CA3AF'/%3E%3C/svg%3E";
-
 export function CustomerHome() {
   const navigate = useNavigate();
   const [searchFocused, setSearchFocused] = useState(false);
@@ -375,7 +366,7 @@ export function CustomerHome() {
   };
 
   return (
-    <div className="relative flex flex-col h-screen">
+    <div className="relative flex flex-col min-h-dvh">
       {/* Map Container - Fixed 42% height */}
       <div className="h-[42vh] flex-shrink-0 relative overflow-hidden">
         <SITAMap
@@ -397,8 +388,10 @@ export function CustomerHome() {
         {/* BOTTOM-LEFT OVERLAY — Tricycles nearby pill */}
         <div className="absolute bottom-4 left-4 z-[1000]">
           <div className="bg-white rounded-full px-4 py-2 shadow-md flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full" />
-            <span className="text-sm text-gray-700 font-medium">4 tricycles nearby · ~3 min ETA</span>
+            <div className={`w-2 h-2 rounded-full ${nearbyCount > 0 ? "bg-green-500" : "bg-gray-300"}`} />
+            <span className="text-sm text-gray-700 font-medium">
+              {nearbyCount === 0 ? "Walang tricycle malapit" : `${nearbyCount} tricycle${nearbyCount > 1 ? "s" : ""} nearby`}
+            </span>
           </div>
         </div>
 

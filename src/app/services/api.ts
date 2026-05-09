@@ -484,4 +484,5 @@ export interface DriverData {
   total_rides: number;
   total_earnings: number;
   average_rating: number;
+  profile_photo_url?: string;
 }

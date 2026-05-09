@@ -77,7 +77,7 @@ export function DriverSignup() {
 
   if (registered) {
     return (
-      <div className="h-screen w-full flex flex-col items-center justify-center bg-[#1a1a2e] px-6">
+      <div className="min-h-dvh w-full flex flex-col items-center justify-center bg-[#1a1a2e] px-6">
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -91,7 +91,7 @@ export function DriverSignup() {
             Ang iyong application bilang driver ay natanggap na.
           </p>
           <p className="text-gray-400 text-sm leading-relaxed mb-8">
-            Ikaw ay <span className="text-[#F47920] font-semibold">ireview ng Admin</span> bago makapag-login. Maaaring tumagal ng 1–2 araw.
+            Ikaw ay <span className="text-[#F47920] font-semibold">ireview ng Admin</span> bago makapag-login. Maaaring tumagal ng 1â€“2 araw.
           </p>
           <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 mb-8 text-left space-y-2">
             <div className="flex items-center gap-2">
@@ -115,7 +115,7 @@ export function DriverSignup() {
   }
 
   return (
-    <div className="h-screen w-full flex flex-col bg-gray-50 overflow-hidden">
+    <div className="min-h-dvh w-full flex flex-col bg-gray-50 overflow-hidden">
       {/* Header */}
       <div className="bg-gradient-to-b from-[#1a1a2e] to-[#2d2d4e] pt-12 pb-8 px-5 relative">
         <button
@@ -126,7 +126,7 @@ export function DriverSignup() {
         </button>
         <div className="text-center mt-6">
           <div className="w-16 h-16 bg-[#F47920]/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-3">
-            <span className="text-3xl">🛺</span>
+            <span className="text-3xl">ðŸ›º</span>
           </div>
           <h1 className="text-white font-bold text-2xl mb-1">Maging Driver</h1>
           <p className="text-gray-400 text-sm">Register as a SITA tricycle driver</p>
@@ -216,7 +216,7 @@ export function DriverSignup() {
                   <input
                     type={showPassword ? "text" : "password"}
                     required
-                    placeholder="••••••••"
+                    placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     className="w-full px-3 py-2.5 pr-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F47920]/20 focus:border-[#F47920] text-sm text-gray-800"
@@ -236,7 +236,7 @@ export function DriverSignup() {
           {/* Vehicle Info Section */}
           <div className="bg-white rounded-2xl p-4 shadow-sm">
             <h2 className="text-gray-800 font-bold text-sm mb-4 flex items-center gap-2">
-              <span className="text-lg">🛺</span>
+              <span className="text-lg">ðŸ›º</span>
               Tricycle Details
             </h2>
 

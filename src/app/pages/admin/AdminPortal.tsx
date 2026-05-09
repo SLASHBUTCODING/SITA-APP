@@ -4,7 +4,7 @@ import { motion } from "motion/react";
 import { Shield, Clock, Star, Eye, EyeOff, CheckCircle, XCircle, RotateCcw, AlertCircle, Car, FileText, DollarSign, Save, LogOut, RefreshCw, Users } from "lucide-react";
 import { supabase } from "../../../lib/supabase";
 
-const ADMIN_PASSWORD = "sita-admin-2024";
+const ADMIN_PASSWORD = (import.meta as any).env?.VITE_ADMIN_PASSWORD || "sita-admin-2024";
 
 interface Driver {
   id: string;

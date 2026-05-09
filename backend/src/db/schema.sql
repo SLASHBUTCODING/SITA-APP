@@ -410,6 +410,69 @@ CREATE TRIGGER trg_rides_updated_at
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 -- ============================================================
+-- ADDITIONAL TABLES (UI-driven content + per-user activity)
+-- These replace the Figma-era hardcoded mock arrays in the frontend.
+-- ============================================================
+
+-- Per-user notifications (in-app inbox)
+CREATE TABLE IF NOT EXISTS notifications (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL,
+  user_role VARCHAR(20) NOT NULL CHECK (user_role IN ('customer', 'driver')),
+  type VARCHAR(30) NOT NULL,           -- 'ride'|'promo'|'payment'|'rating'|'system'
+  title VARCHAR(200) NOT NULL,
+  body TEXT,
+  data JSONB,
+  read_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications (user_id, user_role, created_at DESC);
+
+-- Global promotions (admin-managed)
+CREATE TABLE IF NOT EXISTS promotions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  code VARCHAR(50) UNIQUE NOT NULL,
+  title VARCHAR(200) NOT NULL,
+  description TEXT,
+  discount_type VARCHAR(20) NOT NULL CHECK (discount_type IN ('percent', 'fixed')),
+  discount_value DECIMAL(10, 2) NOT NULL,
+  valid_from DATE,
+  valid_until DATE,
+  active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Driver tips (admin-managed content shown on driver Home)
+CREATE TABLE IF NOT EXISTS driver_tips (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  body TEXT NOT NULL,
+  active BOOLEAN DEFAULT TRUE,
+  display_order INT DEFAULT 0
+);
+
+-- Driver achievements/badges
+CREATE TABLE IF NOT EXISTS driver_achievements (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  driver_id UUID NOT NULL REFERENCES drivers(id) ON DELETE CASCADE,
+  badge_key VARCHAR(50) NOT NULL,      -- 'top_driver'|'five_star'|'on_time'|...
+  awarded_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (driver_id, badge_key)
+);
+
+-- Wallet transactions (customer + driver)
+CREATE TABLE IF NOT EXISTS wallet_transactions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL,
+  user_role VARCHAR(20) NOT NULL CHECK (user_role IN ('customer', 'driver')),
+  amount DECIMAL(10, 2) NOT NULL,      -- negative for spend
+  type VARCHAR(20) NOT NULL,           -- 'topup'|'ride'|'refund'|'promo'
+  description TEXT,
+  ride_id UUID REFERENCES rides(id),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_wallet_tx_user ON wallet_transactions (user_id, user_role, created_at DESC);
+
+-- ============================================================
 -- SUPABASE REALTIME PUBLICATION
 -- ============================================================
 
@@ -419,6 +482,30 @@ ALTER PUBLICATION supabase_realtime ADD TABLE rides;
 
 -- Enable Realtime for drivers table (allows customers to track driver location in real-time)
 ALTER PUBLICATION supabase_realtime ADD TABLE drivers;
+
+-- Enable Realtime for in-app notification inbox + wallet transactions
+ALTER PUBLICATION supabase_realtime ADD TABLE notifications;
+ALTER PUBLICATION supabase_realtime ADD TABLE wallet_transactions;
+
+-- Prototype-grade RLS posture: keep wide-open SELECT on the new tables to
+-- match how rides/drivers are configured. Tighten via policies later.
+ALTER TABLE notifications        DISABLE ROW LEVEL SECURITY;
+ALTER TABLE promotions           DISABLE ROW LEVEL SECURITY;
+ALTER TABLE driver_tips          DISABLE ROW LEVEL SECURITY;
+ALTER TABLE driver_achievements  DISABLE ROW LEVEL SECURITY;
+ALTER TABLE wallet_transactions  DISABLE ROW LEVEL SECURITY;
+
+-- Seed a few rows so the UI never renders empty during dev.
+INSERT INTO driver_tips (body, display_order) VALUES
+  ('Mga mataong oras: 6–9 AM at 4–7 PM', 1),
+  ('Pinakamataong lugar: Palengke at paaralan', 2),
+  ('Kumita ng mas malaki sa weekend!', 3)
+ON CONFLICT DO NOTHING;
+
+INSERT INTO promotions (code, title, description, discount_type, discount_value, valid_until, active) VALUES
+  ('SITA20', '20% OFF sa kahit anong ride', 'Maximum discount ₱40', 'percent', 20, '2026-12-31', TRUE),
+  ('NEWUSER', '₱50 OFF para sa first ride', 'For new SITA users only', 'fixed', 50, '2026-12-31', TRUE)
+ON CONFLICT (code) DO NOTHING;
 
 -- ============================================================
 -- DEFAULT ADMIN USER (change password immediately!)
