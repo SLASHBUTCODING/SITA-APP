@@ -38,6 +38,22 @@ export function DriverHome() {
   const displayName = driver ? `${driver.first_name} ${driver.last_name}` : "Driver";
   const driverId = driver?.id;
 
+  // Restore online/offline state from DB on mount so toggle persists across navigation.
+  useEffect(() => {
+    if (!driverId) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("drivers")
+        .select("is_online")
+        .eq("id", driverId)
+        .single();
+      if (cancelled) return;
+      if (data?.is_online) setIsOnline(true);
+    })();
+    return () => { cancelled = true; };
+  }, [driverId]);
+
   // Get GPS location immediately on mount
   useEffect(() => {
     const fetchInitialLocation = () => {
@@ -281,7 +297,10 @@ export function DriverHome() {
             <h1 className="text-white font-bold text-base">{displayName}</h1>
           </div>
         </div>
-        <button className="relative w-9 h-9 bg-white/10 rounded-full flex items-center justify-center">
+        <button
+          onClick={() => navigate("/driver/notifications")}
+          className="relative w-9 h-9 bg-white/10 rounded-full flex items-center justify-center"
+        >
           <Bell className="w-4 h-4 text-white" />
           <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-[#F47920] rounded-full border border-[#1a1a2e]" />
         </button>

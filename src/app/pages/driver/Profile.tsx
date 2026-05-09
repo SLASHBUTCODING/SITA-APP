@@ -37,25 +37,35 @@ export function DriverProfile() {
   const driver = getStoredUser<DriverData>();
   const driverId = driver?.id;
   const [badgeKeys, setBadgeKeys] = useState<string[]>([]);
+  const [liveStats, setLiveStats] = useState<{ total_rides: number; average_rating: number; total_earnings: number } | null>(null);
 
   useEffect(() => {
     if (!driverId) return;
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
-        .from("driver_achievements")
-        .select("badge_key")
-        .eq("driver_id", driverId);
+      const [{ data: ach }, { data: drv }, { data: rides }] = await Promise.all([
+        supabase.from("driver_achievements").select("badge_key").eq("driver_id", driverId),
+        supabase.from("drivers").select("total_rides, average_rating, total_earnings").eq("id", driverId).single(),
+        supabase.from("rides").select("fare_amount").eq("driver_id", driverId).eq("status", "completed"),
+      ]);
       if (cancelled) return;
-      setBadgeKeys(((data ?? []) as { badge_key: string }[]).map((r) => r.badge_key));
+      setBadgeKeys(((ach ?? []) as { badge_key: string }[]).map((r) => r.badge_key));
+
+      const completedTotal = (rides ?? []).reduce((sum, r: { fare_amount: number | null }) => sum + (r.fare_amount || 0), 0);
+      const completedCount = rides?.length ?? 0;
+      setLiveStats({
+        total_rides: drv?.total_rides ?? completedCount,
+        average_rating: drv?.average_rating ?? 5.0,
+        total_earnings: drv?.total_earnings ?? completedTotal,
+      });
     })();
     return () => { cancelled = true; };
   }, [driverId]);
 
   const stats = [
-    { emoji: "🛺", label: "Total Trips",   value: driver?.total_rides ? driver.total_rides.toLocaleString() : "0" },
-    { emoji: "⭐", label: "Driver Rating", value: driver?.average_rating ? (driver.average_rating ?? 0).toFixed(1) : "--" },
-    { emoji: "💰", label: "Total Kita",    value: driver?.total_earnings ? `₱${Math.floor(driver.total_earnings).toLocaleString()}` : "₱0" },
+    { emoji: "🛺", label: "Total Trips",   value: (liveStats?.total_rides ?? 0).toLocaleString() },
+    { emoji: "⭐", label: "Driver Rating", value: liveStats?.average_rating ? liveStats.average_rating.toFixed(1) : "--" },
+    { emoji: "💰", label: "Total Kita",    value: `₱${Math.floor(liveStats?.total_earnings ?? 0).toLocaleString()}` },
   ];
 
   const handleLogout = () => {
@@ -82,7 +92,7 @@ export function DriverProfile() {
             <p className="text-gray-400 text-xs">{driver?.phone || "---"}</p>
             <div className="flex items-center gap-1 mt-1">
               <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-              <span className="text-white text-xs font-semibold">{(driver?.average_rating ?? 0).toFixed(1) || "--"}</span>
+              <span className="text-white text-xs font-semibold">{(liveStats?.average_rating ?? driver?.average_rating ?? 0).toFixed(1) || "--"}</span>
               <span className="text-gray-400 text-xs">· {driver?.verification_status === "approved" ? "Verified Driver" : "Pending Verification"}</span>
             </div>
           </div>

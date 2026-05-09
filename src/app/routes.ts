@@ -59,6 +59,7 @@ export const router = createBrowserRouter([
       { path: "driver/done", Component: DriverRideDone },
       { path: "driver/profile", Component: DriverProfile },
       { path: "driver/earnings", Component: DriverEarnings },
+      { path: "driver/notifications", Component: CustomerNotifications },
     ],
   },
 ]);

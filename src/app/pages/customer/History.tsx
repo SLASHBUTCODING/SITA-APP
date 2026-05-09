@@ -114,13 +114,13 @@ export function CustomerHistory() {
           >
             <button className="w-full p-4" onClick={() => setExpanded(expanded === trip.id ? null : trip.id)}>
               <div className="flex items-center gap-3">
-                <img src={DRIVER_IMAGE} alt="Driver" className="w-10 h-10 rounded-full object-cover border-2 border-orange-100" />
-                <div className="flex-1 text-left">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-bold text-gray-800">
+                <img src={DRIVER_IMAGE} alt="Driver" className="w-10 h-10 rounded-full object-cover border-2 border-orange-100 flex-shrink-0" />
+                <div className="flex-1 min-w-0 text-left">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-bold text-gray-800 truncate">
                       {trip.driver_first_name ? `${trip.driver_first_name} ${trip.driver_last_name}` : "Driver"}
                     </p>
-                    <p className="text-sm font-black text-gray-800">₱ {(trip.fare_amount ?? 0).toFixed(0)}</p>
+                    <p className="text-sm font-black text-gray-800 flex-shrink-0">₱ {(trip.fare_amount ?? 0).toFixed(0)}</p>
                   </div>
                   <div className="flex items-center justify-between mt-0.5">
                     <p className="text-xs text-gray-400 capitalize">{trip.status}</p>

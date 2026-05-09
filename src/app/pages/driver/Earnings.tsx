@@ -195,10 +195,10 @@ export function DriverEarnings() {
                 <div className="w-10 h-10 bg-[#F47920]/10 rounded-xl flex items-center justify-center flex-shrink-0">
                   <span className="text-lg">🛺</span>
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs text-gray-400">{new Date(trip.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} · {trip.distance_km || 0} km</p>
-                    <p className="text-[#F47920] font-black text-sm">+₱{trip.fare_amount || 0}</p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs text-gray-400 truncate">{new Date(trip.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} · {trip.distance_km || 0} km</p>
+                    <p className="text-[#F47920] font-black text-sm flex-shrink-0">+₱{trip.fare_amount || 0}</p>
                   </div>
                   <p className="text-xs font-semibold text-gray-700 truncate">{trip.pickup_address || "---"} → {trip.dropoff_address || "---"}</p>
                 </div>

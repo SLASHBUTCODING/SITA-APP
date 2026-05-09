@@ -2,7 +2,7 @@ import { useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { ArrowLeft, Bell, Check, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getStoredUser, type UserData } from "../../services/api";
+import { getStoredUser, getStoredRole, type UserData } from "../../services/api";
 import { supabase } from "../../../lib/supabase";
 
 type Notif = {
@@ -38,6 +38,8 @@ export function CustomerNotifications() {
   const navigate = useNavigate();
   const user = getStoredUser<UserData>();
   const userId = user?.id;
+  const role = getStoredRole();
+  const userRole = role === "driver" ? "driver" : "customer";
   const [notifications, setNotifications] = useState<Notif[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -49,7 +51,7 @@ export function CustomerNotifications() {
         .from("notifications")
         .select("id,type,title,body,read_at,created_at")
         .eq("user_id", userId)
-        .eq("user_role", "customer")
+        .eq("user_role", userRole)
         .order("created_at", { ascending: false })
         .limit(50);
       if (cancelled) return;
