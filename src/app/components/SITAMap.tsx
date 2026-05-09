@@ -98,7 +98,6 @@ export interface MapProps {
   destinationLocation?: [number, number];
   routeCoordinates?: Array<[number, number]>;
   nearbyDrivers?: DriverMarker[];
-  showRoute?: boolean;
   className?: string;
   onMapClick?: (lat: number, lng: number) => void;
 }
@@ -113,7 +112,6 @@ export function SITAMap({
   destinationLocation,
   routeCoordinates,
   nearbyDrivers = [],
-  showRoute = false,
   className = "",
   onMapClick,
 }: MapProps) {
@@ -121,6 +119,7 @@ export function SITAMap({
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<{ [key: string]: L.Marker }>({});
   const routeRef = useRef<L.Polyline | null>(null);
+  const hasFittedRouteRef = useRef(false);
 
   // Default center: Use actual GPS location or Batangas, Philippines as fallback
   const defaultCenter: [number, number] = customerLocation || center || driverLocation || [13.7565, 121.0583]; // Batangas, Philippines
@@ -174,14 +173,15 @@ export function SITAMap({
     const map = mapRef.current;
 
     if (customerLocation) {
-      if (markersRef.current["customer"]) {
-        markersRef.current["customer"].setLatLng(customerLocation);
-      } else {
+      const isFirst = !markersRef.current["customer"];
+      if (isFirst) {
         markersRef.current["customer"] = L.marker(customerLocation, { icon: customerIcon })
           .addTo(map)
           .bindPopup("📍 Iyong lokasyon");
+        map.setView(customerLocation, zoom);
+      } else {
+        markersRef.current["customer"].setLatLng(customerLocation);
       }
-      map.setView(customerLocation, zoom);
     }
   }, [customerLocation]);
 
@@ -191,17 +191,17 @@ export function SITAMap({
     const map = mapRef.current;
 
     if (driverLocation) {
-      console.log('[SITAMap] Updating driver marker at:', driverLocation);
-      if (markersRef.current["driver"]) {
-        // Smoothly animate driver marker movement
-        markersRef.current["driver"].setLatLng(driverLocation);
-      } else {
+      const isFirst = !markersRef.current["driver"];
+      if (isFirst) {
         markersRef.current["driver"] = L.marker(driverLocation, { icon: driverIcon })
           .addTo(map)
           .bindPopup("🛺 Driver");
+        map.setView(driverLocation, 16);
+      } else {
+        markersRef.current["driver"].setLatLng(driverLocation);
+        // Follow-camera: smoothly pan so the driver pin stays centered as they move.
+        map.panTo(driverLocation, { animate: true, duration: 0.6 });
       }
-      // Center map on driver location
-      map.setView(driverLocation, 15);
     } else {
       if (markersRef.current["driver"]) {
         markersRef.current["driver"].remove();
@@ -246,14 +246,20 @@ export function SITAMap({
     if (routeCoordinates && routeCoordinates.length >= 2) {
       routeRef.current = L.polyline(routeCoordinates, {
         color: "#F47920",
-        weight: 4,
-        opacity: 0.7,
-        dashArray: "10, 5"
+        weight: 5,
+        opacity: 0.85,
       }).addTo(map);
 
-      // Fit map to show route
-      const bounds = L.latLngBounds(routeCoordinates);
-      map.fitBounds(bounds, { padding: [50, 50] });
+      // Only fit-to-bounds the very first time a route appears (e.g. when the
+      // ride starts). After that we let the driver follow-camera take over so
+      // the map doesn't keep zooming out every time the route is recomputed.
+      if (!hasFittedRouteRef.current) {
+        const bounds = L.latLngBounds(routeCoordinates);
+        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+        hasFittedRouteRef.current = true;
+      }
+    } else {
+      hasFittedRouteRef.current = false;
     }
   }, [routeCoordinates]);
 
@@ -272,36 +278,6 @@ export function SITAMap({
       }
     }
   }, [dropoffLocation]);
-
-  // Draw route between two points
-  useEffect(() => {
-    if (!mapRef.current) return;
-    const map = mapRef.current;
-
-    if (showRoute && driverLocation && (pickupLocation || customerLocation)) {
-      const destination = pickupLocation || customerLocation!;
-
-      // Remove existing route
-      if (routeRef.current) {
-        routeRef.current.remove();
-      }
-
-      // Draw simple straight line route (dashed orange)
-      routeRef.current = L.polyline([driverLocation, destination], {
-        color: "#F47920",
-        weight: 4,
-        opacity: 0.8,
-        dashArray: "10, 10",
-      }).addTo(map);
-
-      // Fit map to show both points
-      const bounds = L.latLngBounds([driverLocation, destination]);
-      map.fitBounds(bounds, { padding: [50, 50] });
-    } else if (routeRef.current) {
-      routeRef.current.remove();
-      routeRef.current = null;
-    }
-  }, [showRoute, driverLocation, pickupLocation, customerLocation]);
 
   // Update nearby driver markers
   useEffect(() => {
