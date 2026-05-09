@@ -6,6 +6,7 @@ import { SITAMap } from "../../components/SITAMap";
 import { watchDriverLocation, watchRideStatus } from "../../../services/realtimeTracking";
 import { SOSModal } from "../../components/SOSModal";
 import { ridesApi, type RideData } from "../../services/api";
+import { getRoute } from "../../services/routing";
 
 const DRIVER_IMAGE =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23E5E7EB'/%3E%3Cpath d='M50 45c8.284 0 15-6.716 15-15s-6.716-15-15-15-15 6.716-15 15 6.716 15 15 15zM50 50c-16.569 0-30 10.745-30 24v6h60v-6c0-13.255-13.431-24-30-24z' fill='%239CA3AF'/%3E%3C/svg%3E";
@@ -32,6 +33,7 @@ export function CustomerRide() {
   const [rideData, setRideData] = useState<RideData | null>(initialRide || null);
   const [driverCoords, setDriverCoords] = useState<[number, number] | undefined>();
   const [customerCoords, setCustomerCoords] = useState<[number, number] | undefined>();
+  const [routeCoords, setRouteCoords] = useState<Array<[number, number]>>([]);
 
   useEffect(() => {
     const interval = setInterval(() => setElapsed((e) => e + 1), 1000);
@@ -80,6 +82,24 @@ export function CustomerRide() {
     }
   }, [rideId, rideData]);
 
+  // Recompute route from driver to current target whenever driver moves.
+  // Before pickup (step 0/1): driver -> pickup. After pickup (step >= 2): driver -> dropoff.
+  useEffect(() => {
+    if (!driverCoords || !rideData) return;
+
+    const goingToDropoff = step >= 2;
+    const targetLat = goingToDropoff ? rideData.dropoff_latitude : rideData.pickup_latitude;
+    const targetLng = goingToDropoff ? rideData.dropoff_longitude : rideData.pickup_longitude;
+    if (!targetLat || !targetLng) return;
+
+    let cancelled = false;
+    getRoute(driverCoords[0], driverCoords[1], targetLat, targetLng).then((route) => {
+      if (cancelled || !route) return;
+      setRouteCoords(route.coordinates);
+    });
+    return () => { cancelled = true; };
+  }, [driverCoords, rideData, step]);
+
   const minutes = Math.floor(elapsed / 60);
   const seconds = elapsed % 60;
   const isNearEnd = step >= 3;
@@ -90,7 +110,9 @@ export function CustomerRide() {
         <SITAMap
           customerLocation={customerCoords}
           driverLocation={driverCoords}
-          showRoute={!!driverCoords && !!customerCoords}
+          pickupLocation={rideData ? [rideData.pickup_latitude, rideData.pickup_longitude] as [number, number] : undefined}
+          dropoffLocation={rideData ? [rideData.dropoff_latitude, rideData.dropoff_longitude] as [number, number] : undefined}
+          routeCoordinates={routeCoords}
           className="w-full h-full"
         />
 

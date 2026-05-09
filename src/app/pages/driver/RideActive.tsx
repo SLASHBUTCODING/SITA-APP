@@ -60,22 +60,24 @@ export function DriverRideActive() {
     }
   }, [rideId]);
 
-  // Calculate route to customer pickup when driver location and ride data are available
+  // Calculate route from driver to current target (pickup during heading_pickup, dropoff during in_ride)
   useEffect(() => {
-    if (!driverCoords || !rideData || phase !== "heading_pickup") return;
+    if (!driverCoords || !rideData) return;
+    if (phase === "at_pickup") return;
 
-    const pickupLat = rideData.pickup_latitude;
-    const pickupLng = rideData.pickup_longitude;
+    const targetLat = phase === "in_ride" ? rideData.dropoff_latitude : rideData.pickup_latitude;
+    const targetLng = phase === "in_ride" ? rideData.dropoff_longitude : rideData.pickup_longitude;
 
-    if (!pickupLat || !pickupLng) return;
+    if (!targetLat || !targetLng) return;
 
-    getRoute(driverCoords[0], driverCoords[1], pickupLat, pickupLng).then((route) => {
-      if (route) {
-        setRouteCoords(route.coordinates);
-        setRouteDistance(route.distanceKm);
-        setEtaMinutes(calculateETA(route.distanceKm));
-      }
+    let cancelled = false;
+    getRoute(driverCoords[0], driverCoords[1], targetLat, targetLng).then((route) => {
+      if (cancelled || !route) return;
+      setRouteCoords(route.coordinates);
+      setRouteDistance(route.distanceKm);
+      setEtaMinutes(calculateETA(route.distanceKm));
     });
+    return () => { cancelled = true; };
   }, [driverCoords, rideData, phase]);
 
   useEffect(() => {
@@ -189,7 +191,7 @@ export function DriverRideActive() {
         </div>
 
         {/* ETA badge */}
-        {phase === "heading_pickup" && etaMinutes > 0 && (
+        {phase !== "at_pickup" && etaMinutes > 0 && (
           <div className="absolute top-24 left-4 bg-[#F47920]/90 backdrop-blur-sm rounded-xl px-3 py-2 flex items-center gap-2">
             <Clock className="w-4 h-4 text-white" />
             <div>
