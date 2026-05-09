@@ -395,15 +395,30 @@ export const authApi = {
 
 export const ridesApi = {
   get: (rideId: string) => {
-    // Get ride from Supabase
     return supabase
       .from('rides')
-      .select('*')
+      .select(`
+        *,
+        driver:driver_id(first_name, last_name, phone, plate_number, vehicle_model),
+        customer:customer_id(first_name, last_name, phone)
+      `)
       .eq('id', rideId)
       .single()
       .then(({ data, error }) => {
         if (error) throw error;
-        return { success: true, data };
+        const d = data as any;
+        const flat: RideData = {
+          ...d,
+          driver_first_name: d.driver?.first_name,
+          driver_last_name: d.driver?.last_name,
+          driver_phone: d.driver?.phone,
+          plate_number: d.driver?.plate_number,
+          vehicle_model: d.driver?.vehicle_model,
+          customer_first_name: d.customer?.first_name,
+          customer_last_name: d.customer?.last_name,
+          customer_phone: d.customer?.phone,
+        };
+        return { success: true, data: flat };
       });
   },
 

@@ -54,9 +54,9 @@ export function DriverProfile() {
       const completedTotal = (rides ?? []).reduce((sum, r: { fare_amount: number | null }) => sum + (r.fare_amount || 0), 0);
       const completedCount = rides?.length ?? 0;
       setLiveStats({
-        total_rides: drv?.total_rides ?? completedCount,
+        total_rides: completedCount,
         average_rating: drv?.average_rating ?? 5.0,
-        total_earnings: drv?.total_earnings ?? completedTotal,
+        total_earnings: completedTotal,
       });
     })();
     return () => { cancelled = true; };

@@ -91,6 +91,35 @@ export function DriverRideActive() {
     return () => clearInterval(interval);
   }, []);
 
+  // Auto-complete ride when driver's GPS is within ~50m of dropoff during in_ride
+  const [autoCompleted, setAutoCompleted] = useState(false);
+  useEffect(() => {
+    if (autoCompleted) return;
+    if (phase !== "in_ride") return;
+    if (!driverCoords || !rideData?.dropoff_latitude || !rideData?.dropoff_longitude) return;
+
+    const R = 6371000; // meters
+    const toRad = (d: number) => (d * Math.PI) / 180;
+    const dLat = toRad(rideData.dropoff_latitude - driverCoords[0]);
+    const dLon = toRad(rideData.dropoff_longitude - driverCoords[1]);
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRad(driverCoords[0])) *
+        Math.cos(toRad(rideData.dropoff_latitude)) *
+        Math.sin(dLon / 2) ** 2;
+    const distMeters = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    if (distMeters <= 50) {
+      setAutoCompleted(true);
+      (async () => {
+        if (rideId && driverId) {
+          try { await driverCompleteRide(driverId, rideId); } catch { /* ignore */ }
+        }
+        navigate("/driver/done", { state: { rideId, rideData } });
+      })();
+    }
+  }, [phase, driverCoords, rideData, autoCompleted, rideId, driverId, navigate]);
+
   const minutes = Math.floor(elapsed / 60);
   const seconds = elapsed % 60;
   const config = PHASE_CONFIG[phase];
