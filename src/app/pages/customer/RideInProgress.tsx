@@ -87,7 +87,7 @@ export function CustomerRide() {
   useEffect(() => {
     if (!driverCoords || !rideData) return;
 
-    const goingToDropoff = step >= 2;
+    const goingToDropoff = rideData.status === 'in_progress';
     const targetLat = goingToDropoff ? rideData.dropoff_latitude : rideData.pickup_latitude;
     const targetLng = goingToDropoff ? rideData.dropoff_longitude : rideData.pickup_longitude;
     if (!targetLat || !targetLng) return;
@@ -98,7 +98,7 @@ export function CustomerRide() {
       setRouteCoords(route.coordinates);
     });
     return () => { cancelled = true; };
-  }, [driverCoords, rideData, step]);
+  }, [driverCoords, rideData]);
 
   const minutes = Math.floor(elapsed / 60);
   const seconds = elapsed % 60;

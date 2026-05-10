@@ -100,6 +100,7 @@ export interface MapProps {
   nearbyDrivers?: DriverMarker[];
   className?: string;
   onMapClick?: (lat: number, lng: number) => void;
+  followZoom?: number;
 }
 
 export function SITAMap({
@@ -114,6 +115,7 @@ export function SITAMap({
   nearbyDrivers = [],
   className = "",
   onMapClick,
+  followZoom = 19,
 }: MapProps) {
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -199,8 +201,9 @@ export function SITAMap({
         map.setView(driverLocation, 16);
       } else {
         markersRef.current["driver"].setLatLng(driverLocation);
-        // Follow-camera: smoothly pan so the driver pin stays centered as they move.
-        map.panTo(driverLocation, { animate: true, duration: 0.6 });
+        // Follow-camera: smoothly pan + zoom so the driver pin stays centered
+        // at street-level zoom as they move.
+        map.flyTo(driverLocation, followZoom, { animate: true, duration: 0.6 });
       }
     } else {
       if (markersRef.current["driver"]) {
@@ -255,7 +258,7 @@ export function SITAMap({
       // the map doesn't keep zooming out every time the route is recomputed.
       if (!hasFittedRouteRef.current) {
         const bounds = L.latLngBounds(routeCoordinates);
-        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 17 });
         hasFittedRouteRef.current = true;
       }
     } else {
