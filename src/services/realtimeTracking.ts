@@ -168,30 +168,21 @@ export function startDriverLocationUpdates(
   onLocationUpdate?: (lat: number, lng: number) => void
 ) {
   let watchId: number | null = null;
-  let lastLat: number | null = null;
-  let lastLng: number | null = null;
 
   if (!navigator.geolocation) {
     console.warn('Geolocation not supported');
     return () => {};
   }
 
+  // Every GPS tick goes through. The DB write is already throttled to 1/10s
+  // by `updateDriverLocation`. We intentionally do NOT skip stationary fixes:
+  // the customer's realtime subscription needs a steady heartbeat so the pin
+  // appears even when the driver is parked or only moving slowly.
   watchId = navigator.geolocation.watchPosition(
     (position) => {
       const { latitude: lat, longitude: lng } = position.coords;
-
-      // Only update if moved more than ~10 meters (avoid micro-updates)
-      const moved =
-        lastLat === null ||
-        Math.abs(lat - lastLat) > 0.0001 ||
-        Math.abs(lng - lastLng!) > 0.0001;
-
-      if (moved) {
-        lastLat = lat;
-        lastLng = lng;
-        updateDriverLocation(driverId, lat, lng); // already throttled to 10s
-        if (onLocationUpdate) onLocationUpdate(lat, lng);
-      }
+      updateDriverLocation(driverId, lat, lng);
+      if (onLocationUpdate) onLocationUpdate(lat, lng);
     },
     (error) => {
       console.error('Geolocation error:', error.message);
