@@ -60,6 +60,9 @@ export function CustomerRide() {
     if (!rideId) return;
 
     const stop = watchRideStatus(rideId, (status) => {
+      // Keep rideData.status in sync so the route-recompute effect can gate
+      // on the authoritative server status (it doesn't refetch on its own).
+      setRideData((prev) => (prev ? { ...prev, status } : prev));
       if (status === 'accepted' || status === 'searching') {
         setStep(0);
       } else if (status === 'arrived') {

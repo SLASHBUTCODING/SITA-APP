@@ -121,7 +121,6 @@ export function SITAMap({
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<{ [key: string]: L.Marker }>({});
   const routeRef = useRef<L.Polyline | null>(null);
-  const hasFittedRouteRef = useRef(false);
 
   // Default center: Use actual GPS location or Batangas, Philippines as fallback
   const defaultCenter: [number, number] = customerLocation || center || driverLocation || [13.7565, 121.0583]; // Batangas, Philippines
@@ -198,7 +197,7 @@ export function SITAMap({
         markersRef.current["driver"] = L.marker(driverLocation, { icon: driverIcon })
           .addTo(map)
           .bindPopup("🛺 Driver");
-        map.setView(driverLocation, 16);
+        map.setView(driverLocation, followZoom);
       } else {
         markersRef.current["driver"].setLatLng(driverLocation);
         // Follow-camera: smoothly pan + zoom so the driver pin stays centered
@@ -245,24 +244,16 @@ export function SITAMap({
       routeRef.current = null;
     }
 
-    // Add new route if coordinates provided
+    // Add new route if coordinates provided. We intentionally do not fitBounds
+    // here — the follow-camera (driver-marker effect) keeps the map centered
+    // on the driver at followZoom so the user always gets a tight, Google-Maps-
+    // style driving view rather than getting yanked out to fit the full leg.
     if (routeCoordinates && routeCoordinates.length >= 2) {
       routeRef.current = L.polyline(routeCoordinates, {
         color: "#F47920",
         weight: 5,
         opacity: 0.85,
       }).addTo(map);
-
-      // Only fit-to-bounds the very first time a route appears (e.g. when the
-      // ride starts). After that we let the driver follow-camera take over so
-      // the map doesn't keep zooming out every time the route is recomputed.
-      if (!hasFittedRouteRef.current) {
-        const bounds = L.latLngBounds(routeCoordinates);
-        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 17 });
-        hasFittedRouteRef.current = true;
-      }
-    } else {
-      hasFittedRouteRef.current = false;
     }
   }, [routeCoordinates]);
 
