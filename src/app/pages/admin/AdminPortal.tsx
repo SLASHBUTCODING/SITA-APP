@@ -4,7 +4,13 @@ import { motion } from "motion/react";
 import { Shield, Clock, Star, Eye, EyeOff, CheckCircle, XCircle, RotateCcw, Car, FileText, DollarSign, Save, LogOut, RefreshCw, Users } from "lucide-react";
 import { supabase } from "../../../lib/supabase";
 
-const ADMIN_PASSWORD = (import.meta as any).env?.VITE_ADMIN_PASSWORD || "sita-admin-2024";
+interface Admin {
+  id: string;
+  username: string;
+  email: string;
+  full_name: string;
+  role: string;
+}
 
 interface Driver {
   id: string;
@@ -35,9 +41,12 @@ interface PricingConfig {
 export function AdminPortal() {
   const navigate = useNavigate();
   const [authed, setAuthed] = useState(false);
+  const [admin, setAdmin] = useState<Admin | null>(null);
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [pwError, setPwError] = useState("");
+  const [loggingIn, setLoggingIn] = useState(false);
 
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(false);
@@ -53,14 +62,38 @@ export function AdminPortal() {
   const [pricingLoading, setPricingLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"drivers" | "pricing">("drivers");
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === ADMIN_PASSWORD) {
+    setPwError("");
+    setLoggingIn(true);
+    try {
+      const { data, error } = await supabase.rpc("verify_admin_login", {
+        p_username: username.trim(),
+        p_password: password,
+      });
+      if (error) {
+        setPwError("Login failed. Try again.");
+        return;
+      }
+      const row = (Array.isArray(data) ? data[0] : data) as Admin | undefined;
+      if (!row) {
+        setPwError("Invalid username or password.");
+        return;
+      }
+      setAdmin(row);
       setAuthed(true);
-      setPwError("");
-    } else {
-      setPwError("Invalid admin password.");
+      setPassword("");
+    } finally {
+      setLoggingIn(false);
     }
+  };
+
+  const handleLogout = () => {
+    setAuthed(false);
+    setAdmin(null);
+    setUsername("");
+    setPassword("");
+    setPwError("");
   };
 
   const fetchDrivers = async () => {
@@ -158,13 +191,25 @@ export function AdminPortal() {
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="text-white/80 text-sm font-semibold mb-2 block">Admin Password</label>
+              <label className="text-white/80 text-sm font-semibold mb-2 block">Username</label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="admin"
+                autoComplete="username"
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-[#F47920]"
+              />
+            </div>
+            <div>
+              <label className="text-white/80 text-sm font-semibold mb-2 block">Password</label>
               <div className="relative">
                 <input
                   type={showPw ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
+                  autoComplete="current-password"
                   className="w-full pr-11 pl-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-[#F47920]"
                 />
                 <button
@@ -179,9 +224,10 @@ export function AdminPortal() {
             </div>
             <button
               type="submit"
-              className="w-full bg-[#F47920] text-white font-bold py-3 rounded-xl shadow-lg"
+              disabled={loggingIn}
+              className="w-full bg-[#F47920] text-white font-bold py-3 rounded-xl shadow-lg disabled:opacity-60"
             >
-              Enter Admin Portal
+              {loggingIn ? "Signing in…" : "Enter Admin Portal"}
             </button>
           </form>
         </motion.div>
@@ -203,7 +249,7 @@ export function AdminPortal() {
           </div>
         </div>
         <button
-          onClick={() => setAuthed(false)}
+          onClick={handleLogout}
           className="flex items-center gap-1.5 text-gray-400 hover:text-white text-sm"
         >
           <LogOut className="w-4 h-4" />

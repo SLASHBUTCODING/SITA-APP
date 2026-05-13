@@ -532,3 +532,57 @@ VALUES (
   'SITA Super Admin',
   'super_admin'
 ) ON CONFLICT (username) DO NOTHING;
+
+-- ============================================================
+-- ADMIN LOGIN (Supabase-direct path)
+-- Frontend AdminPortal calls verify_admin_login(...) via supabase.rpc().
+-- pgcrypto's crypt() verifies bcrypt $2b$ hashes used by the existing seed.
+-- ============================================================
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+CREATE OR REPLACE FUNCTION verify_admin_login(p_username TEXT, p_password TEXT)
+RETURNS TABLE (id UUID, username VARCHAR, email VARCHAR, full_name VARCHAR, role VARCHAR)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_admin admins%ROWTYPE;
+BEGIN
+  SELECT * INTO v_admin FROM admins
+   WHERE (admins.username = p_username OR admins.email = p_username)
+     AND is_active = TRUE
+   LIMIT 1;
+
+  IF v_admin.id IS NULL THEN
+    RETURN;
+  END IF;
+
+  IF crypt(p_password, v_admin.password_hash) <> v_admin.password_hash THEN
+    RETURN;
+  END IF;
+
+  UPDATE admins SET last_login = NOW() WHERE admins.id = v_admin.id;
+
+  RETURN QUERY SELECT v_admin.id, v_admin.username, v_admin.email, v_admin.full_name, v_admin.role;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION verify_admin_login(TEXT, TEXT) TO anon, authenticated;
+
+-- Lock direct reads on admins; RPC above is the only frontend path in.
+-- Service-role key (backend) still bypasses RLS.
+ALTER TABLE admins ENABLE ROW LEVEL SECURITY;
+
+-- First operator-facing admin account.
+INSERT INTO admins (username, email, password_hash, full_name, role)
+VALUES (
+  'admin',
+  'admin@sita.local',
+  crypt('sita admin 123', gen_salt('bf', 10)),
+  'SITA Admin',
+  'admin'
+)
+ON CONFLICT (username) DO UPDATE
+  SET password_hash = EXCLUDED.password_hash,
+      is_active = TRUE;
