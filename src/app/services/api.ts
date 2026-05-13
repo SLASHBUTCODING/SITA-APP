@@ -215,10 +215,6 @@ export const authApi = {
     plateNumber: string;
     vehicleModel: string;
     vehicleColor: string;
-    licenseUrl?: string;
-    nbiClearanceUrl?: string;
-    barangayClearanceUrl?: string;
-    medicalCertificateUrl?: string;
   }) => {
     try {
       const emailToUse = body.email || `${body.phone}@sita.local`;
@@ -265,10 +261,6 @@ export const authApi = {
           plate_number: body.plateNumber,
           vehicle_model: body.vehicleModel,
           vehicle_color: body.vehicleColor,
-          license_url: body.licenseUrl || null,
-          nbi_clearance_url: body.nbiClearanceUrl || null,
-          barangay_clearance_url: body.barangayClearanceUrl || null,
-          medical_certificate_url: body.medicalCertificateUrl || null,
           password_hash: 'handled_by_supabase_auth',
           verification_status: 'pending'
         }])

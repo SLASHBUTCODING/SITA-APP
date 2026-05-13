@@ -56,6 +56,19 @@ CREATE TABLE IF NOT EXISTS drivers (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Match prod: the three extra document URL columns were added directly to
+-- Supabase ahead of this file. Keep them idempotent so a fresh setup matches.
+ALTER TABLE drivers
+  ADD COLUMN IF NOT EXISTS nbi_clearance_url VARCHAR(500),
+  ADD COLUMN IF NOT EXISTS barangay_clearance_url VARCHAR(500),
+  ADD COLUMN IF NOT EXISTS medical_certificate_url VARCHAR(500);
+
+-- Storage bucket for driver-uploaded documents lives in Supabase Storage as
+-- `driver-documents` (public read for prototype). Layout: {driver_id}/{kind}.{ext}
+-- where kind ∈ license | nbi | barangay | medical. URLs land in the four
+-- drivers.*_url columns. Bucket + policies are created via the Supabase
+-- dashboard, not this file.
+
 -- ============================================================
 -- 3. RIDES TABLE
 -- ============================================================

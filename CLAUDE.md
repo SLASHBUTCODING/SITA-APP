@@ -14,10 +14,12 @@ Frontend (root):
 - `npm start` — runs `server.js`, a tiny Express static server that serves `dist/` and explicitly routes `/sw.js` and `/manifest.webmanifest` so PWA MIME types are correct in production.
 
 Backend (`cd backend`):
-- `npm run dev` — nodemon + ts-node on `src/server.ts`.
+- `npm run dev` — nodemon + ts-node on `src/server.ts`. Defaults to port `3010` (`SOCKET_PORT=3011`).
 - `npm run build` / `npm start` — `tsc` to `dist/`, then `node dist/server.js`.
 
-No test runner is configured in either package.
+No test runner, lint script, or standalone typecheck script is configured in either package. `npm run build` is the only path that surfaces TS errors.
+
+Default admin login for the `/admin` route (from README): `superadmin` / `Admin@SITA2024`.
 
 ## Architecture
 
@@ -38,8 +40,11 @@ The Express backend exposes Socket.IO, but the frontend's primary tracking path 
 - Frontend: [src/lib/supabase.ts](src/lib/supabase.ts) uses the **anon key**. Auth state is mirrored to `localStorage` keys `sita_token`, `sita_user`, `sita_role` by [src/services/auth.ts](src/services/auth.ts).
 - Backend: [backend/src/db/supabase.ts](backend/src/db/supabase.ts) uses the **service role key** with `persistSession: false` and issues its own JWTs.
 
+### Driver document storage
+Driver-uploaded docs live in the Supabase Storage bucket `driver-documents` (public read for prototype), keyed `{driverId}/{kind}.{ext}` where `kind ∈ license | nbi | barangay | medical`. URLs are written back to `drivers.{license_url, nbi_clearance_url, barangay_clearance_url, medical_certificate_url}`. Three of those columns are added via `ALTER TABLE … IF NOT EXISTS` in [schema.sql](backend/src/db/schema.sql) to match prod (the original `CREATE TABLE` only declares `license_url`). The actual upload goes through [src/services/driverDocs.ts](src/services/driverDocs.ts) — swap public URLs for signed URLs in there if you ever lock the bucket down.
+
 ### PWA
-`vite-plugin-pwa` is configured in [vite.config.ts](vite.config.ts) with `registerType: 'autoUpdate'` and `devOptions.enabled: true` (service worker active in dev). Generated `dev-dist/sw.js` and `public/manifest.webmanifest` are committed.
+`vite-plugin-pwa` is configured in [vite.config.ts](vite.config.ts) with `registerType: 'autoUpdate'` and `devOptions.enabled: true` (service worker active in dev). Generated `dev-dist/sw.js` and `public/manifest.webmanifest` are committed. OpenStreetMap tiles (`[a-c].tile.openstreetmap.org`) are runtime-cached via Workbox `CacheFirst` (500 entries, 7 days) so maps survive offline.
 
 ### Path alias
 `@` → `src/` (in `vite.config.ts`). Prefer it for cross-folder imports.

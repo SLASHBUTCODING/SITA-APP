@@ -3,6 +3,8 @@ import { useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { ArrowLeft, User, Phone, Mail, Lock, Eye, EyeOff, Upload, FileText, CheckCircle, Clock, Shield } from "lucide-react";
 import { authApi, saveAuth } from "../../services/api";
+import { supabase } from "../../../lib/supabase";
+import { uploadDriverDoc, validateDocFile, type DriverDocKind } from "../../../services/driverDocs";
 
 export function DriverSignup() {
   const navigate = useNavigate();
@@ -24,24 +26,23 @@ export function DriverSignup() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [fileErrors, setFileErrors] = useState<Partial<Record<DriverDocKind, string>>>({});
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'license' | 'nbi' | 'barangay' | 'medical') => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      switch (type) {
-        case 'license':
-          setLicenseFile(file);
-          break;
-        case 'nbi':
-          setNbiFile(file);
-          break;
-        case 'barangay':
-          setBarangayFile(file);
-          break;
-        case 'medical':
-          setMedicalFile(file);
-          break;
-      }
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: DriverDocKind) => {
+    if (!e.target.files || !e.target.files[0]) return;
+    const file = e.target.files[0];
+    const err = validateDocFile(file);
+    if (err) {
+      setFileErrors((prev) => ({ ...prev, [type]: err }));
+      e.target.value = "";
+      return;
+    }
+    setFileErrors((prev) => ({ ...prev, [type]: undefined }));
+    switch (type) {
+      case 'license': setLicenseFile(file); break;
+      case 'nbi': setNbiFile(file); break;
+      case 'barangay': setBarangayFile(file); break;
+      case 'medical': setMedicalFile(file); break;
     }
   };
 
@@ -52,21 +53,32 @@ export function DriverSignup() {
     setError("");
     setLoading(true);
     try {
-      // In a real app, you'd upload files to Supabase Storage here
-      // For now, using placeholder URLs
-      const licenseUrl = licenseFile ? "placeholder_license_url" : undefined;
-      const nbiUrl = nbiFile ? "placeholder_nbi_url" : undefined;
-      const barangayUrl = barangayFile ? "placeholder_barangay_url" : undefined;
-      const medicalUrl = medicalFile ? "placeholder_medical_url" : undefined;
-      
-      const res = await authApi.driverRegister({ 
-        ...formData, 
-        licenseUrl, 
-        nbiClearanceUrl: nbiUrl,
-        barangayClearanceUrl: barangayUrl,
-        medicalCertificateUrl: medicalUrl
-      });
+      const res = await authApi.driverRegister(formData);
       saveAuth(res.token, res.driver, "driver");
+
+      const driverId = (res.driver as { id?: string } | null)?.id;
+      if (!driverId) throw new Error("Registration succeeded but driver id was missing.");
+
+      const uploads: Array<Promise<[DriverDocKind, string]>> = [];
+      if (licenseFile)  uploads.push(uploadDriverDoc(driverId, "license",  licenseFile ).then((u) => ["license",  u]));
+      if (nbiFile)      uploads.push(uploadDriverDoc(driverId, "nbi",      nbiFile     ).then((u) => ["nbi",      u]));
+      if (barangayFile) uploads.push(uploadDriverDoc(driverId, "barangay", barangayFile).then((u) => ["barangay", u]));
+      if (medicalFile)  uploads.push(uploadDriverDoc(driverId, "medical",  medicalFile ).then((u) => ["medical",  u]));
+
+      const results = await Promise.all(uploads);
+      const urls: Record<string, string> = {};
+      for (const [kind, url] of results) {
+        if (kind === "license")  urls.license_url             = url;
+        if (kind === "nbi")      urls.nbi_clearance_url       = url;
+        if (kind === "barangay") urls.barangay_clearance_url  = url;
+        if (kind === "medical")  urls.medical_certificate_url = url;
+      }
+
+      if (Object.keys(urls).length > 0) {
+        const { error: updateError } = await supabase.from("drivers").update(urls).eq("id", driverId);
+        if (updateError) throw new Error(`Could not save document URLs: ${updateError.message}`);
+      }
+
       setRegistered(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
@@ -339,6 +351,7 @@ export function DriverSignup() {
                     )}
                   </div>
                 </label>
+                {fileErrors.license && <p className="text-xs text-red-600 mt-2">{fileErrors.license}</p>}
               </div>
 
               {/* NBI Clearance */}
@@ -386,6 +399,7 @@ export function DriverSignup() {
                     )}
                   </div>
                 </label>
+                {fileErrors.nbi && <p className="text-xs text-red-600 mt-2">{fileErrors.nbi}</p>}
               </div>
 
               {/* Barangay Clearance */}
@@ -433,6 +447,7 @@ export function DriverSignup() {
                     )}
                   </div>
                 </label>
+                {fileErrors.barangay && <p className="text-xs text-red-600 mt-2">{fileErrors.barangay}</p>}
               </div>
 
               {/* Medical Certificate */}
@@ -480,6 +495,7 @@ export function DriverSignup() {
                     )}
                   </div>
                 </label>
+                {fileErrors.medical && <p className="text-xs text-red-600 mt-2">{fileErrors.medical}</p>}
               </div>
             </div>
           </div>
